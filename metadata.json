@@ -1,0 +1,6 @@
+{
+  "name": "HD Fried Chicken – Laporan Harian Outlet",
+  "description": "Aplikasi laporan harian outlet HD Fried Chicken berbasis mobile-first untuk pencatatan stok, penjualan offline, pengeluaran, promo, dan pembayaran.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

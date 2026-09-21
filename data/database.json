@@ -1,0 +1,2269 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Ayam PB",
+      "selling_price": 9000,
+      "active": true,
+      "outlet_type": "traditional",
+      "description": "1 pcs Dada / Paha Atas",
+      "items_composition": {
+        "pb": 1
+      }
+    },
+    {
+      "id": 2,
+      "name": "Ayam PK",
+      "selling_price": 7000,
+      "active": true,
+      "outlet_type": "traditional",
+      "description": "1 pcs Sayap / Paha Bawah",
+      "items_composition": {
+        "pk": 1
+      }
+    },
+    {
+      "id": 3,
+      "name": "Kulit",
+      "selling_price": 5000,
+      "active": true,
+      "outlet_type": "traditional",
+      "description": "1 porsi Kulit Crispy",
+      "items_composition": {
+        "kulit": 1
+      }
+    },
+    {
+      "id": 4,
+      "name": "Nasi",
+      "selling_price": 3000,
+      "active": true,
+      "outlet_type": "traditional",
+      "description": "1 porsi Nasi Hangat",
+      "items_composition": {
+        "nasi": 1
+      }
+    },
+    {
+      "id": 5,
+      "name": "Chili Oil",
+      "selling_price": 1000,
+      "active": true,
+      "outlet_type": "traditional",
+      "description": "1 cup Sambal Chili Oil"
+    },
+    {
+      "id": 6,
+      "name": "Geprek",
+      "selling_price": 2000,
+      "active": true,
+      "outlet_type": "traditional",
+      "description": "1 cup Sambal Geprek"
+    },
+    {
+      "id": 101,
+      "name": "Hemat 1",
+      "selling_price": 20000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pk + 1 nasi",
+      "items_composition": {
+        "pk": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 102,
+      "name": "Hemat 2",
+      "selling_price": 23000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pb + 1 nasi",
+      "items_composition": {
+        "pb": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 103,
+      "name": "Double",
+      "selling_price": 30000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pk + 1 pb + 1 nasi",
+      "items_composition": {
+        "pk": 1,
+        "pb": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 104,
+      "name": "Family",
+      "selling_price": 100000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "3 pb + 2 pk + 5 nasi",
+      "items_composition": {
+        "pb": 3,
+        "pk": 2,
+        "nasi": 5
+      }
+    },
+    {
+      "id": 105,
+      "name": "Paket Ori 1",
+      "selling_price": 20000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pk + 1 nasi",
+      "items_composition": {
+        "pk": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 106,
+      "name": "Paket Ori 2",
+      "selling_price": 23000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pb + 1 nasi",
+      "items_composition": {
+        "pb": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 107,
+      "name": "Paket BB 1",
+      "selling_price": 22000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pk + 1 nasi",
+      "items_composition": {
+        "pk": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 108,
+      "name": "Paket BB 2",
+      "selling_price": 25000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pb + 1 nasi",
+      "items_composition": {
+        "pb": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 109,
+      "name": "Paket LH 1",
+      "selling_price": 22000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pk + 1 nasi",
+      "items_composition": {
+        "pk": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 110,
+      "name": "Paket LH 2",
+      "selling_price": 25000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pb + 1 nasi",
+      "items_composition": {
+        "pb": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 111,
+      "name": "Paket HJ 1",
+      "selling_price": 22000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pk + 1 nasi",
+      "items_composition": {
+        "pk": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 112,
+      "name": "Paket HJ 2",
+      "selling_price": 25000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 pb + 1 nasi",
+      "items_composition": {
+        "pb": 1,
+        "nasi": 1
+      }
+    },
+    {
+      "id": 113,
+      "name": "Mineral Water",
+      "selling_price": 5000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "Mineral Water",
+      "items_composition": {
+        "kulit": 1
+      }
+    },
+    {
+      "id": 114,
+      "name": "Nasi Extra",
+      "selling_price": 5000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 porsi Nasi Tambahan",
+      "items_composition": {
+        "nasi": 1
+      }
+    },
+    {
+      "id": 116,
+      "name": "Kentang Goreng",
+      "selling_price": 15000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "Kentang Goreng"
+    },
+    {
+      "id": 115,
+      "name": "Chili Oil Extra",
+      "selling_price": 1000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "Saus Chili Oil"
+    },
+    {
+      "id": 7,
+      "name": "Kulit CK",
+      "selling_price": 5000,
+      "active": true,
+      "outlet_type": "traditional",
+      "description": "1 porsi Kulit CK",
+      "items_composition": {
+        "kulit_ck": 1
+      }
+    },
+    {
+      "id": 117,
+      "name": "Kulit CK",
+      "selling_price": 5000,
+      "active": true,
+      "outlet_type": "modern",
+      "description": "1 porsi Kulit CK",
+      "items_composition": {
+        "kulit_ck": 1
+      }
+    }
+  ],
+  "reports": [
+    {
+      "id": 1,
+      "report_date": "2026-09-20",
+      "outlet_name": "Cisalak",
+      "staff_name": "Budi",
+      "total_income": 1439000,
+      "total_expense": 23000,
+      "promo": 3000,
+      "promo_note": "Jumat Berkah",
+      "final_total": 1413000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 7000,
+      "loss_percentage": 0.4864489228630994,
+      "notes": "ramai",
+      "created_at": "2026-09-20T03:37:39.958Z"
+    },
+    {
+      "id": 2,
+      "report_date": "2026-09-20",
+      "outlet_name": "Kawalu",
+      "staff_name": "Budi",
+      "total_income": 2497000,
+      "total_expense": 28000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 2469000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 1500,
+      "loss_percentage": 0.060072086503804564,
+      "notes": "ramaai",
+      "created_at": "2026-09-20T03:57:19.887Z"
+    },
+    {
+      "id": 3,
+      "report_date": "2026-09-20",
+      "outlet_name": "City Garden",
+      "staff_name": "Budi",
+      "total_income": 7174000,
+      "total_expense": 63000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 7111000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 0,
+      "loss_percentage": 0,
+      "notes": "ramai ",
+      "created_at": "2026-09-20T04:11:06.666Z"
+    },
+    {
+      "id": 4,
+      "report_date": "2026-09-20",
+      "outlet_name": "City Garden",
+      "staff_name": "aboy",
+      "total_income": 6834000,
+      "total_expense": 73000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 6761000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 0,
+      "loss_percentage": 0,
+      "notes": "ramaaii",
+      "created_at": "2026-09-20T04:18:44.638Z"
+    },
+    {
+      "id": 5,
+      "report_date": "2026-09-20",
+      "outlet_name": "Cisalak",
+      "staff_name": "bih",
+      "total_income": 1568000,
+      "total_expense": 28000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 1540000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 0,
+      "loss_percentage": 0,
+      "notes": "",
+      "created_at": "2026-09-20T04:19:58.515Z"
+    },
+    {
+      "id": 6,
+      "report_date": "2026-09-20",
+      "outlet_name": "Cisalak",
+      "staff_name": "aj",
+      "total_income": 1568000,
+      "total_expense": 23000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 1545000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 0,
+      "loss_percentage": 0,
+      "notes": "ramaai",
+      "created_at": "2026-09-20T04:24:59.225Z"
+    },
+    {
+      "id": 7,
+      "report_date": "2026-09-20",
+      "outlet_name": "Cisalak",
+      "staff_name": "ej",
+      "total_income": 1568000,
+      "total_expense": 23000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 1545000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 0,
+      "loss_percentage": 0,
+      "notes": "",
+      "created_at": "2026-09-20T04:28:32.704Z"
+    },
+    {
+      "id": 8,
+      "report_date": "2026-09-20",
+      "outlet_name": "Cisalak",
+      "staff_name": "Ej",
+      "total_income": 1499000,
+      "total_expense": 13000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 1486000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 34500,
+      "loss_percentage": 2.3015343562374917,
+      "notes": "",
+      "created_at": "2026-09-20T04:29:45.599Z"
+    },
+    {
+      "id": 9,
+      "report_date": "2026-09-20",
+      "outlet_name": "City Garden",
+      "staff_name": "ej",
+      "total_income": 1692000,
+      "total_expense": 13000,
+      "promo": 0,
+      "promo_note": "",
+      "final_total": 1679000,
+      "is_balanced": true,
+      "balance_difference": 0,
+      "total_loss": 528000,
+      "loss_percentage": 31.20567375886525,
+      "notes": "",
+      "created_at": "2026-09-20T04:39:08.003Z"
+    }
+  ],
+  "stock": [
+    {
+      "id": 1,
+      "report_id": 1,
+      "ayam_mentah": "20",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "19",
+      "masak_ayam_pk": "18",
+      "kulit_mentah": "",
+      "beras": "3",
+      "masak_nasi": "2",
+      "tosser_in": {
+        "goreng_ayam_pb": "2",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "97",
+      "goreng_ayam_pk": "72",
+      "goreng_kulit": "",
+      "nasi": "24",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 2,
+      "report_id": 2,
+      "ayam_mentah": "30",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "30",
+      "masak_ayam_pk": "29",
+      "kulit_mentah": "",
+      "beras": "7",
+      "masak_nasi": "7",
+      "tosser_in": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "150",
+      "goreng_ayam_pk": "116",
+      "goreng_kulit": "",
+      "nasi": "84",
+      "s_chili_oil": "30",
+      "s_geprek": "30"
+    },
+    {
+      "id": 3,
+      "report_id": 3,
+      "ayam_mentah": "35",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "35",
+      "masak_ayam_pk": "35",
+      "kulit_mentah": "",
+      "beras": "27",
+      "masak_nasi": "26.5",
+      "tosser_in": {
+        "goreng_ayam_pb": "6",
+        "goreng_ayam_pk": "5",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "181",
+      "goreng_ayam_pk": "145",
+      "goreng_kulit": "30",
+      "nasi": "318",
+      "s_chili_oil": "30",
+      "s_geprek": "30"
+    },
+    {
+      "id": 4,
+      "report_id": 4,
+      "ayam_mentah": "35",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "35",
+      "masak_ayam_pk": "35",
+      "kulit_mentah": "",
+      "beras": "27",
+      "masak_nasi": "26.5",
+      "tosser_in": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "175",
+      "goreng_ayam_pk": "140",
+      "goreng_kulit": "",
+      "nasi": "318",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 5,
+      "report_id": 5,
+      "ayam_mentah": "20",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "20",
+      "masak_ayam_pk": "20",
+      "kulit_mentah": "",
+      "beras": "3",
+      "masak_nasi": "3",
+      "tosser_in": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "100",
+      "goreng_ayam_pk": "80",
+      "goreng_kulit": "",
+      "nasi": "36",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 6,
+      "report_id": 6,
+      "ayam_mentah": "20",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "20",
+      "masak_ayam_pk": "20",
+      "kulit_mentah": "",
+      "beras": "3",
+      "masak_nasi": "3",
+      "tosser_in": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "100",
+      "goreng_ayam_pk": "80",
+      "goreng_kulit": "",
+      "nasi": "36",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 7,
+      "report_id": 7,
+      "ayam_mentah": "20",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "20",
+      "masak_ayam_pk": "20",
+      "kulit_mentah": "",
+      "beras": "3",
+      "masak_nasi": "3",
+      "tosser_in": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "100",
+      "goreng_ayam_pk": "80",
+      "goreng_kulit": "",
+      "nasi": "36",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 8,
+      "report_id": 8,
+      "ayam_mentah": "20",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "20",
+      "masak_ayam_pk": "20",
+      "kulit_mentah": "",
+      "beras": "3",
+      "masak_nasi": "3",
+      "tosser_in": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "100",
+      "goreng_ayam_pk": "80",
+      "goreng_kulit": "",
+      "nasi": "36",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 9,
+      "report_id": 9,
+      "ayam_mentah": "20",
+      "goreng_ayam": "",
+      "masak_ayam_pb": "20",
+      "masak_ayam_pk": "20",
+      "kulit_mentah": "",
+      "beras": "7",
+      "masak_nasi": "7",
+      "tosser_in": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "tosser_out": {
+        "goreng_ayam_pb": "",
+        "goreng_ayam_pk": "",
+        "goreng_kulit": "",
+        "nasi": "",
+        "s_chili_oil": "",
+        "s_geprek": ""
+      },
+      "goreng_ayam_pb": "100",
+      "goreng_ayam_pk": "80",
+      "goreng_kulit": "",
+      "nasi": "84",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    }
+  ],
+  "remaining_stock": [
+    {
+      "id": 1,
+      "report_id": 1,
+      "ayam_mentah": "1.5",
+      "ayam_mentah_keterangan": "1 kg 0.5 Ayam PK",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "1",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "1",
+      "goreng_kulit": "",
+      "nasi": "1",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 2,
+      "report_id": 2,
+      "ayam_mentah": "0.5",
+      "ayam_mentah_keterangan": "0.5 Ayam PK",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "",
+      "nasi": "1",
+      "s_chili_oil": "2",
+      "s_geprek": "1"
+    },
+    {
+      "id": 3,
+      "report_id": 3,
+      "ayam_mentah": "0",
+      "ayam_mentah_keterangan": "Habis (0 kg)",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0.5",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "0",
+      "nasi": "0",
+      "s_chili_oil": "0",
+      "s_geprek": "0"
+    },
+    {
+      "id": 4,
+      "report_id": 4,
+      "ayam_mentah": "0",
+      "ayam_mentah_keterangan": "Habis (0 kg)",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0.5",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "",
+      "nasi": "0",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 5,
+      "report_id": 5,
+      "ayam_mentah": "0",
+      "ayam_mentah_keterangan": "Habis (0 kg)",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "",
+      "nasi": "0",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 6,
+      "report_id": 6,
+      "ayam_mentah": "0",
+      "ayam_mentah_keterangan": "Habis (0 kg)",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "",
+      "nasi": "0",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 7,
+      "report_id": 7,
+      "ayam_mentah": "0",
+      "ayam_mentah_keterangan": "Habis (0 kg)",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "",
+      "nasi": "0",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 8,
+      "report_id": 8,
+      "ayam_mentah": "0",
+      "ayam_mentah_keterangan": "Habis (0 kg)",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "0",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "",
+      "nasi": "23",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    },
+    {
+      "id": 9,
+      "report_id": 9,
+      "ayam_mentah": "0",
+      "ayam_mentah_keterangan": "Habis (0 kg)",
+      "goreng_ayam": "",
+      "kulit_mentah": "",
+      "beras": "0",
+      "masak_nasi": "",
+      "goreng_ayam_pb": "96",
+      "goreng_ayam_pk": "0",
+      "goreng_kulit": "",
+      "nasi": "0",
+      "s_chili_oil": "",
+      "s_geprek": ""
+    }
+  ],
+  "sales": [
+    {
+      "id": 1,
+      "report_id": 1,
+      "product_id": 1,
+      "product_name": "Ayam PB",
+      "price": 9000,
+      "quantity": 97,
+      "subtotal": 873000
+    },
+    {
+      "id": 2,
+      "report_id": 1,
+      "product_id": 2,
+      "product_name": "Ayam PK",
+      "price": 7000,
+      "quantity": 71,
+      "subtotal": 497000
+    },
+    {
+      "id": 3,
+      "report_id": 1,
+      "product_id": 3,
+      "product_name": "Kulit",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 4,
+      "report_id": 1,
+      "product_id": 4,
+      "product_name": "Nasi",
+      "price": 3000,
+      "quantity": 23,
+      "subtotal": 69000
+    },
+    {
+      "id": 5,
+      "report_id": 1,
+      "product_id": 5,
+      "product_name": "Chili Oil",
+      "price": 1000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 6,
+      "report_id": 1,
+      "product_id": 6,
+      "product_name": "Geprek",
+      "price": 2000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 7,
+      "report_id": 2,
+      "product_id": 1,
+      "product_name": "Ayam PB",
+      "price": 9000,
+      "quantity": 150,
+      "subtotal": 1350000
+    },
+    {
+      "id": 8,
+      "report_id": 2,
+      "product_id": 2,
+      "product_name": "Ayam PK",
+      "price": 7000,
+      "quantity": 116,
+      "subtotal": 812000
+    },
+    {
+      "id": 9,
+      "report_id": 2,
+      "product_id": 3,
+      "product_name": "Kulit",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 10,
+      "report_id": 2,
+      "product_id": 4,
+      "product_name": "Nasi",
+      "price": 3000,
+      "quantity": 83,
+      "subtotal": 249000
+    },
+    {
+      "id": 11,
+      "report_id": 2,
+      "product_id": 5,
+      "product_name": "Chili Oil",
+      "price": 1000,
+      "quantity": 28,
+      "subtotal": 28000
+    },
+    {
+      "id": 12,
+      "report_id": 2,
+      "product_id": 6,
+      "product_name": "Geprek",
+      "price": 2000,
+      "quantity": 29,
+      "subtotal": 58000
+    },
+    {
+      "id": 13,
+      "report_id": 3,
+      "product_id": 101,
+      "product_name": "Hemat 1",
+      "price": 20000,
+      "quantity": 74,
+      "subtotal": 1480000
+    },
+    {
+      "id": 14,
+      "report_id": 3,
+      "product_id": 102,
+      "product_name": "Hemat 2",
+      "price": 23000,
+      "quantity": 87,
+      "subtotal": 2001000
+    },
+    {
+      "id": 15,
+      "report_id": 3,
+      "product_id": 103,
+      "product_name": "Double",
+      "price": 30000,
+      "quantity": 20,
+      "subtotal": 600000
+    },
+    {
+      "id": 16,
+      "report_id": 3,
+      "product_id": 104,
+      "product_name": "Family",
+      "price": 100000,
+      "quantity": 3,
+      "subtotal": 300000
+    },
+    {
+      "id": 17,
+      "report_id": 3,
+      "product_id": 105,
+      "product_name": "Paket Ori 1",
+      "price": 20000,
+      "quantity": 13,
+      "subtotal": 260000
+    },
+    {
+      "id": 18,
+      "report_id": 3,
+      "product_id": 106,
+      "product_name": "Paket Ori 2",
+      "price": 23000,
+      "quantity": 36,
+      "subtotal": 828000
+    },
+    {
+      "id": 19,
+      "report_id": 3,
+      "product_id": 107,
+      "product_name": "Paket BB 1",
+      "price": 22000,
+      "quantity": 11,
+      "subtotal": 242000
+    },
+    {
+      "id": 20,
+      "report_id": 3,
+      "product_id": 108,
+      "product_name": "Paket BB 2",
+      "price": 25000,
+      "quantity": 10,
+      "subtotal": 250000
+    },
+    {
+      "id": 21,
+      "report_id": 3,
+      "product_id": 109,
+      "product_name": "Paket LH 1",
+      "price": 22000,
+      "quantity": 11,
+      "subtotal": 242000
+    },
+    {
+      "id": 22,
+      "report_id": 3,
+      "product_id": 110,
+      "product_name": "Paket LH 2",
+      "price": 25000,
+      "quantity": 10,
+      "subtotal": 250000
+    },
+    {
+      "id": 23,
+      "report_id": 3,
+      "product_id": 111,
+      "product_name": "Paket HJ 1",
+      "price": 22000,
+      "quantity": 10,
+      "subtotal": 220000
+    },
+    {
+      "id": 24,
+      "report_id": 3,
+      "product_id": 112,
+      "product_name": "Paket HJ 2",
+      "price": 25000,
+      "quantity": 9,
+      "subtotal": 225000
+    },
+    {
+      "id": 25,
+      "report_id": 3,
+      "product_id": 113,
+      "product_name": "Kulit Extra",
+      "price": 5000,
+      "quantity": 30,
+      "subtotal": 150000
+    },
+    {
+      "id": 26,
+      "report_id": 3,
+      "product_id": 114,
+      "product_name": "Nasi Extra",
+      "price": 3000,
+      "quantity": 12,
+      "subtotal": 36000
+    },
+    {
+      "id": 27,
+      "report_id": 3,
+      "product_id": 115,
+      "product_name": "Chili Oil Extra",
+      "price": 1000,
+      "quantity": 30,
+      "subtotal": 30000
+    },
+    {
+      "id": 28,
+      "report_id": 3,
+      "product_id": 116,
+      "product_name": "Geprek Extra",
+      "price": 2000,
+      "quantity": 30,
+      "subtotal": 60000
+    },
+    {
+      "id": 29,
+      "report_id": 4,
+      "product_id": 101,
+      "product_name": "Hemat 1",
+      "price": 20000,
+      "quantity": 140,
+      "subtotal": 2800000
+    },
+    {
+      "id": 30,
+      "report_id": 4,
+      "product_id": 102,
+      "product_name": "Hemat 2",
+      "price": 23000,
+      "quantity": 175,
+      "subtotal": 4025000
+    },
+    {
+      "id": 31,
+      "report_id": 4,
+      "product_id": 103,
+      "product_name": "Double",
+      "price": 30000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 32,
+      "report_id": 4,
+      "product_id": 104,
+      "product_name": "Family",
+      "price": 100000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 33,
+      "report_id": 4,
+      "product_id": 105,
+      "product_name": "Paket Ori 1",
+      "price": 20000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 34,
+      "report_id": 4,
+      "product_id": 106,
+      "product_name": "Paket Ori 2",
+      "price": 23000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 35,
+      "report_id": 4,
+      "product_id": 107,
+      "product_name": "Paket BB 1",
+      "price": 22000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 36,
+      "report_id": 4,
+      "product_id": 108,
+      "product_name": "Paket BB 2",
+      "price": 25000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 37,
+      "report_id": 4,
+      "product_id": 109,
+      "product_name": "Paket LH 1",
+      "price": 22000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 38,
+      "report_id": 4,
+      "product_id": 110,
+      "product_name": "Paket LH 2",
+      "price": 25000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 39,
+      "report_id": 4,
+      "product_id": 111,
+      "product_name": "Paket HJ 1",
+      "price": 22000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 40,
+      "report_id": 4,
+      "product_id": 112,
+      "product_name": "Paket HJ 2",
+      "price": 25000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 41,
+      "report_id": 4,
+      "product_id": 113,
+      "product_name": "Kulit Extra",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 42,
+      "report_id": 4,
+      "product_id": 114,
+      "product_name": "Nasi Extra",
+      "price": 3000,
+      "quantity": 3,
+      "subtotal": 9000
+    },
+    {
+      "id": 43,
+      "report_id": 4,
+      "product_id": 115,
+      "product_name": "Chili Oil Extra",
+      "price": 1000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 44,
+      "report_id": 4,
+      "product_id": 116,
+      "product_name": "Geprek Extra",
+      "price": 2000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 45,
+      "report_id": 5,
+      "product_id": 1,
+      "product_name": "Ayam PB",
+      "price": 9000,
+      "quantity": 100,
+      "subtotal": 900000
+    },
+    {
+      "id": 46,
+      "report_id": 5,
+      "product_id": 2,
+      "product_name": "Ayam PK",
+      "price": 7000,
+      "quantity": 80,
+      "subtotal": 560000
+    },
+    {
+      "id": 47,
+      "report_id": 5,
+      "product_id": 3,
+      "product_name": "Kulit",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 48,
+      "report_id": 5,
+      "product_id": 4,
+      "product_name": "Nasi",
+      "price": 3000,
+      "quantity": 36,
+      "subtotal": 108000
+    },
+    {
+      "id": 49,
+      "report_id": 5,
+      "product_id": 5,
+      "product_name": "Chili Oil",
+      "price": 1000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 50,
+      "report_id": 5,
+      "product_id": 6,
+      "product_name": "Geprek",
+      "price": 2000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 51,
+      "report_id": 6,
+      "product_id": 1,
+      "product_name": "Ayam PB",
+      "price": 9000,
+      "quantity": 100,
+      "subtotal": 900000
+    },
+    {
+      "id": 52,
+      "report_id": 6,
+      "product_id": 2,
+      "product_name": "Ayam PK",
+      "price": 7000,
+      "quantity": 80,
+      "subtotal": 560000
+    },
+    {
+      "id": 53,
+      "report_id": 6,
+      "product_id": 3,
+      "product_name": "Kulit",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 54,
+      "report_id": 6,
+      "product_id": 4,
+      "product_name": "Nasi",
+      "price": 3000,
+      "quantity": 36,
+      "subtotal": 108000
+    },
+    {
+      "id": 55,
+      "report_id": 6,
+      "product_id": 5,
+      "product_name": "Chili Oil",
+      "price": 1000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 56,
+      "report_id": 6,
+      "product_id": 6,
+      "product_name": "Geprek",
+      "price": 2000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 57,
+      "report_id": 7,
+      "product_id": 1,
+      "product_name": "Ayam PB",
+      "price": 9000,
+      "quantity": 100,
+      "subtotal": 900000
+    },
+    {
+      "id": 58,
+      "report_id": 7,
+      "product_id": 2,
+      "product_name": "Ayam PK",
+      "price": 7000,
+      "quantity": 80,
+      "subtotal": 560000
+    },
+    {
+      "id": 59,
+      "report_id": 7,
+      "product_id": 3,
+      "product_name": "Kulit",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 60,
+      "report_id": 7,
+      "product_id": 4,
+      "product_name": "Nasi",
+      "price": 3000,
+      "quantity": 36,
+      "subtotal": 108000
+    },
+    {
+      "id": 61,
+      "report_id": 7,
+      "product_id": 5,
+      "product_name": "Chili Oil",
+      "price": 1000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 62,
+      "report_id": 7,
+      "product_id": 6,
+      "product_name": "Geprek",
+      "price": 2000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 63,
+      "report_id": 8,
+      "product_id": 1,
+      "product_name": "Ayam PB",
+      "price": 9000,
+      "quantity": 100,
+      "subtotal": 900000
+    },
+    {
+      "id": 64,
+      "report_id": 8,
+      "product_id": 2,
+      "product_name": "Ayam PK",
+      "price": 7000,
+      "quantity": 80,
+      "subtotal": 560000
+    },
+    {
+      "id": 65,
+      "report_id": 8,
+      "product_id": 3,
+      "product_name": "Kulit",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 66,
+      "report_id": 8,
+      "product_id": 4,
+      "product_name": "Nasi",
+      "price": 3000,
+      "quantity": 13,
+      "subtotal": 39000
+    },
+    {
+      "id": 67,
+      "report_id": 8,
+      "product_id": 5,
+      "product_name": "Chili Oil",
+      "price": 1000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 68,
+      "report_id": 8,
+      "product_id": 6,
+      "product_name": "Geprek",
+      "price": 2000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 69,
+      "report_id": 9,
+      "product_id": 101,
+      "product_name": "Hemat 1",
+      "price": 20000,
+      "quantity": 80,
+      "subtotal": 1600000
+    },
+    {
+      "id": 70,
+      "report_id": 9,
+      "product_id": 102,
+      "product_name": "Hemat 2",
+      "price": 23000,
+      "quantity": 4,
+      "subtotal": 92000
+    },
+    {
+      "id": 71,
+      "report_id": 9,
+      "product_id": 103,
+      "product_name": "Double",
+      "price": 30000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 72,
+      "report_id": 9,
+      "product_id": 104,
+      "product_name": "Family",
+      "price": 100000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 73,
+      "report_id": 9,
+      "product_id": 105,
+      "product_name": "Paket Ori 1",
+      "price": 20000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 74,
+      "report_id": 9,
+      "product_id": 106,
+      "product_name": "Paket Ori 2",
+      "price": 23000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 75,
+      "report_id": 9,
+      "product_id": 107,
+      "product_name": "Paket BB 1",
+      "price": 22000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 76,
+      "report_id": 9,
+      "product_id": 108,
+      "product_name": "Paket BB 2",
+      "price": 25000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 77,
+      "report_id": 9,
+      "product_id": 109,
+      "product_name": "Paket LH 1",
+      "price": 22000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 78,
+      "report_id": 9,
+      "product_id": 110,
+      "product_name": "Paket LH 2",
+      "price": 25000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 79,
+      "report_id": 9,
+      "product_id": 111,
+      "product_name": "Paket HJ 1",
+      "price": 22000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 80,
+      "report_id": 9,
+      "product_id": 112,
+      "product_name": "Paket HJ 2",
+      "price": 25000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 81,
+      "report_id": 9,
+      "product_id": 113,
+      "product_name": "Mineral Water",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 82,
+      "report_id": 9,
+      "product_id": 114,
+      "product_name": "Nasi Extra",
+      "price": 5000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 83,
+      "report_id": 9,
+      "product_id": 116,
+      "product_name": "Kentang Goreng",
+      "price": 15000,
+      "quantity": 0,
+      "subtotal": 0
+    },
+    {
+      "id": 84,
+      "report_id": 9,
+      "product_id": 115,
+      "product_name": "Chili Oil Extra",
+      "price": 1000,
+      "quantity": 0,
+      "subtotal": 0
+    }
+  ],
+  "expenses": [
+    {
+      "id": 1,
+      "report_id": 1,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 10000,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 23000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 2,
+      "report_id": 2,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 15000,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 28000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 3,
+      "report_id": 3,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 50000,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 63000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 4,
+      "report_id": 4,
+      "gas": 10000,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 50000,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 73000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 5,
+      "report_id": 5,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 15000,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 28000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 6,
+      "report_id": 6,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 10000,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 23000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 7,
+      "report_id": 7,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 10000,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 23000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 8,
+      "report_id": 8,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 0,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 13000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    },
+    {
+      "id": 9,
+      "report_id": 9,
+      "gas": 0,
+      "galon": 0,
+      "clean_tools": 0,
+      "kulit": 0,
+      "meal": 13000,
+      "bonus": 0,
+      "lain_lain": 0,
+      "lain_lain_keterangan": "",
+      "total_expense": 13000,
+      "beras": 0,
+      "saus": 0,
+      "minyak": 0
+    }
+  ],
+  "payments": [
+    {
+      "id": 1,
+      "report_id": 1,
+      "tunai": 634000,
+      "qr": 779000,
+      "tf": 0,
+      "total_payment": 1413000
+    },
+    {
+      "id": 2,
+      "report_id": 2,
+      "tunai": 480000,
+      "qr": 1989000,
+      "tf": 0,
+      "total_payment": 2469000
+    },
+    {
+      "id": 3,
+      "report_id": 3,
+      "tunai": 322000,
+      "qr": 6789000,
+      "tf": 0,
+      "total_payment": 7111000
+    },
+    {
+      "id": 4,
+      "report_id": 4,
+      "tunai": 321000,
+      "qr": 6440000,
+      "tf": 0,
+      "total_payment": 6761000
+    },
+    {
+      "id": 5,
+      "report_id": 5,
+      "tunai": 262000,
+      "qr": 1278000,
+      "tf": 0,
+      "total_payment": 1540000
+    },
+    {
+      "id": 6,
+      "report_id": 6,
+      "tunai": 167000,
+      "qr": 1378000,
+      "tf": 0,
+      "total_payment": 1545000
+    },
+    {
+      "id": 7,
+      "report_id": 7,
+      "tunai": 167000,
+      "qr": 1378000,
+      "tf": 0,
+      "total_payment": 1545000
+    },
+    {
+      "id": 8,
+      "report_id": 8,
+      "tunai": 167000,
+      "qr": 1319000,
+      "tf": 0,
+      "total_payment": 1486000
+    },
+    {
+      "id": 9,
+      "report_id": 9,
+      "tunai": 1679000,
+      "qr": 0,
+      "tf": 0,
+      "total_payment": 1679000
+    }
+  ],
+  "settings": {
+    "admin_pin": "0825"
+  },
+  "outlets": [
+    {
+      "id": 1,
+      "name": "Cisalak",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 2,
+      "name": "Cieunteung",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 3,
+      "name": "Cigeureung",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 4,
+      "name": "Ciburuyan",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 5,
+      "name": "Aboh",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 6,
+      "name": "BRP",
+      "active": true,
+      "outlet_type": "traditional",
+      "address": "",
+      "phone": ""
+    },
+    {
+      "id": 7,
+      "name": "Indihiang",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 8,
+      "name": "Taman Sari",
+      "active": true,
+      "outlet_type": "traditional",
+      "address": "",
+      "phone": ""
+    },
+    {
+      "id": 9,
+      "name": "Kawalu",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 10,
+      "name": "Bantar Malam",
+      "active": true,
+      "outlet_type": "traditional"
+    },
+    {
+      "id": 11,
+      "name": "Ria Busana",
+      "address": "",
+      "phone": "",
+      "active": true,
+      "outlet_type": "modern"
+    },
+    {
+      "id": 12,
+      "name": "City Garden",
+      "address": "",
+      "phone": "",
+      "active": true,
+      "outlet_type": "modern"
+    },
+    {
+      "id": 13,
+      "name": "Central Kitchen (CK)",
+      "address": "",
+      "phone": "",
+      "active": true,
+      "outlet_type": "traditional"
+    }
+  ],
+  "stock_items": [
+    {
+      "id": 1,
+      "key": "ayam_mentah",
+      "name": "Ayam Mentah",
+      "category": "raw",
+      "unit": "kg",
+      "active": true
+    },
+    {
+      "id": 2,
+      "key": "masak_ayam_pb",
+      "name": "Masak Goreng Ayam PB",
+      "category": "raw",
+      "unit": "ekor/porsi",
+      "active": true
+    },
+    {
+      "id": 3,
+      "key": "masak_ayam_pk",
+      "name": "Masak Goreng Ayam PK",
+      "category": "raw",
+      "unit": "ekor/porsi",
+      "active": true
+    },
+    {
+      "id": 4,
+      "key": "kulit_mentah",
+      "name": "Kulit Mentah",
+      "category": "raw",
+      "unit": "kg",
+      "active": true
+    },
+    {
+      "id": 5,
+      "key": "beras",
+      "name": "Beras",
+      "category": "raw",
+      "unit": "kg",
+      "active": true
+    },
+    {
+      "id": 6,
+      "key": "masak_nasi",
+      "name": "Masak Nasi",
+      "category": "raw",
+      "unit": "kg",
+      "active": true
+    },
+    {
+      "id": 7,
+      "key": "goreng_ayam_pb",
+      "name": "Goreng Ayam PB",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 8,
+      "key": "goreng_ayam_pk",
+      "name": "Goreng Ayam PK",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 9,
+      "key": "goreng_kulit",
+      "name": "Goreng Kulit",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 13,
+      "key": "goreng_kulit_ck",
+      "name": "Kulit CK",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 10,
+      "key": "nasi",
+      "name": "Nasi",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 11,
+      "key": "s_chili_oil",
+      "name": "S. Chili Oil",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 12,
+      "key": "s_geprek",
+      "name": "S. Geprek",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true
+    }
+  ],
+  "tosser_items": [
+    {
+      "id": 1,
+      "key": "goreng_ayam_pb",
+      "name": "Goreng Ayam PB",
+      "type": "both",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 2,
+      "key": "goreng_ayam_pk",
+      "name": "Goreng Ayam PK",
+      "type": "both",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 3,
+      "key": "goreng_kulit",
+      "name": "Goreng Kulit",
+      "type": "both",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 7,
+      "key": "goreng_kulit_ck",
+      "name": "Kulit CK",
+      "type": "both",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 4,
+      "key": "nasi",
+      "name": "Nasi",
+      "type": "both",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 5,
+      "key": "s_chili_oil",
+      "name": "S. Chili Oil",
+      "type": "both",
+      "unit": "pcs",
+      "active": true
+    },
+    {
+      "id": 6,
+      "key": "s_geprek",
+      "name": "S. Geprek",
+      "type": "both",
+      "unit": "pcs",
+      "active": true
+    }
+  ],
+  "expense_categories": [
+    {
+      "id": 1,
+      "key": "gas",
+      "name": "Gas LPG",
+      "default_amount": 0,
+      "description": "Penggantian tabung gas operasional",
+      "active": true
+    },
+    {
+      "id": 2,
+      "key": "galon",
+      "name": "Air Galon",
+      "default_amount": 8000,
+      "description": "Air minum & masak galon",
+      "active": true
+    },
+    {
+      "id": 3,
+      "key": "clean_tools",
+      "name": "Clean Tools",
+      "default_amount": 0,
+      "description": "Sabun cuci, spons, kresek",
+      "active": true
+    },
+    {
+      "id": 4,
+      "key": "kulit",
+      "name": "Kulit Tambahan",
+      "default_amount": 0,
+      "description": "Belanja kulit ekstra",
+      "active": true
+    },
+    {
+      "id": 5,
+      "key": "meal",
+      "name": "Meal (Makan Karyawan)",
+      "default_amount": 25000,
+      "description": "Uang makan staf operasional",
+      "active": true
+    },
+    {
+      "id": 6,
+      "key": "bonus",
+      "name": "Bonus Harian",
+      "default_amount": 0,
+      "description": "Insentif target outlet",
+      "active": true
+    },
+    {
+      "id": 7,
+      "key": "beras",
+      "name": "Beras Tambahan",
+      "default_amount": 0,
+      "description": "Belanja beras darurat",
+      "active": true
+    },
+    {
+      "id": 8,
+      "key": "saus",
+      "name": "Saus & Bumbu",
+      "default_amount": 0,
+      "description": "Bumbu atau saus pelengkap",
+      "active": true
+    },
+    {
+      "id": 9,
+      "key": "minyak",
+      "name": "Minyak Goreng",
+      "default_amount": 0,
+      "description": "Minyak goreng tambahan",
+      "active": true
+    },
+    {
+      "id": 10,
+      "key": "lain_lain",
+      "name": "Lain-lain",
+      "default_amount": 0,
+      "description": "Biaya operasional tak terduga",
+      "active": true
+    }
+  ],
+  "ending_stock_items": [
+    {
+      "id": 1,
+      "key": "ayam_mentah",
+      "name": "Ayam Mentah (Sisa)",
+      "unit": "kg",
+      "tolerance_note": "Maks 0.5 kg (masuk freezer)",
+      "active": true
+    },
+    {
+      "id": 2,
+      "key": "goreng_ayam_pb",
+      "name": "Goreng Ayam PB",
+      "unit": "pcs",
+      "tolerance_note": "Maks 2 pcs batas wajar",
+      "active": true
+    },
+    {
+      "id": 3,
+      "key": "goreng_ayam_pk",
+      "name": "Goreng Ayam PK",
+      "unit": "pcs",
+      "tolerance_note": "Maks 2 pcs batas wajar",
+      "active": true
+    },
+    {
+      "id": 4,
+      "key": "goreng_kulit",
+      "name": "Goreng Kulit",
+      "unit": "pcs",
+      "tolerance_note": "Maks 3 pcs batas wajar",
+      "active": true
+    },
+    {
+      "id": 10,
+      "key": "goreng_kulit_ck",
+      "name": "Kulit CK",
+      "unit": "pcs",
+      "tolerance_note": "Maks 3 pcs batas wajar",
+      "active": true
+    },
+    {
+      "id": 5,
+      "key": "nasi",
+      "name": "Nasi Sisa",
+      "unit": "pcs",
+      "tolerance_note": "Maks 5 pcs",
+      "active": true
+    },
+    {
+      "id": 6,
+      "key": "s_chili_oil",
+      "name": "S. Chili Oil",
+      "unit": "pcs",
+      "tolerance_note": "Maks 3 pcs",
+      "active": true
+    },
+    {
+      "id": 7,
+      "key": "s_geprek",
+      "name": "S. Geprek",
+      "unit": "pcs",
+      "tolerance_note": "Maks 3 pcs",
+      "active": true
+    },
+    {
+      "id": 8,
+      "key": "kulit_mentah",
+      "name": "Kulit Mentah",
+      "unit": "kg",
+      "tolerance_note": "Simpan di chiller/freezer",
+      "active": true
+    },
+    {
+      "id": 9,
+      "key": "beras",
+      "name": "Beras Sisa",
+      "unit": "kg",
+      "tolerance_note": "Simpan tertutup",
+      "active": true
+    }
+  ]
+}
