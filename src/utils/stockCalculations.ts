@@ -324,6 +324,7 @@ export function getProductRequirements(item: {
     pk?: number;
     nasi?: number;
     kulit?: number;
+    kulit_ck?: number;
   };
 }): PackageComponentRequirement[] {
   const name = (item.product_name || item.name || '').toLowerCase().trim();

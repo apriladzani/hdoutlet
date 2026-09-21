@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { mySqlService, initDatabase } from './mysql.ts';
+export { mySqlService, initDatabase };
 import {
   AdminSettings,
   DailyReport,
@@ -466,7 +468,9 @@ export function calculateTotals(
   };
 }
 
-export const dbService = {
+export const dbService = mySqlService;
+
+export const jsonDbService = {
   getProducts(outletType?: string): Product[] {
     const db = loadDatabase();
     if (outletType && outletType !== 'all') {

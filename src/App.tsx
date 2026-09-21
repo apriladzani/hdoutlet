@@ -627,7 +627,6 @@ export default function App() {
 
       // Buka preview modal agar user dapat memeriksa / mencetak laporan sebelum ditutup
       // Jangan langsung reset / close form secara otomatis!
-      setSaveSuccess(true);
       setSelectedReport(finalSavedRecord);
       setIsAdminUnlocked(true);
       try {
@@ -639,7 +638,6 @@ export default function App() {
       console.warn('Saved report to local storage due to network failure:', err);
       setEditingId(localRecord.id);
       showToast('Laporan berhasil disimpan ke riwayat!', 'success');
-      setSaveSuccess(true);
       setSelectedReport(localRecord);
     } finally {
       setIsSubmitting(false);

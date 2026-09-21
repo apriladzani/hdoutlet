@@ -2,84 +2,100 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { dbService } from './src/server/db.ts';
+import { dbService, initDatabase } from './src/server/db.ts';
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   // JSON Body parsing
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
+
+  // Initialize Database
+  try {
+    await initDatabase();
+    console.log('✅ Connected to MySQL database (hd_fried_chicken)');
+  } catch (dbErr: any) {
+    console.error('❌ Failed to initialize MySQL database:', dbErr.message);
+  }
 
   // API Health Check
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', app: 'HD Fried Chicken Laporan Harian Outlet' });
+    res.json({ status: 'ok', app: 'HD Fried Chicken Laporan Harian Outlet', database: 'MySQL' });
   });
 
   // Settings & PIN API
-  app.get('/api/settings', (req, res) => {
+  app.get('/api/settings', async (req, res) => {
     try {
-      res.json(dbService.getSettings());
+      const settings = await dbService.getSettings();
+      res.json(settings);
     } catch (err: any) {
+      console.error('Error fetching settings:', err);
       res.status(500).json({ error: err.message || 'Gagal mengambil pengaturan' });
     }
   });
 
-  app.put('/api/settings/pin', (req, res) => {
+  app.put('/api/settings/pin', async (req, res) => {
     try {
       const { pin } = req.body;
-      const result = dbService.updateAdminPin(pin);
+      const result = await dbService.updateAdminPin(pin);
       res.json(result);
     } catch (err: any) {
+      console.error('Error updating pin:', err);
       res.status(400).json({ error: err.message || 'Gagal mengubah PIN' });
     }
   });
 
   // Outlets API
-  app.get('/api/outlets', (req, res) => {
+  app.get('/api/outlets', async (req, res) => {
     try {
-      res.json(dbService.getOutlets());
+      const outlets = await dbService.getOutlets();
+      res.json(outlets);
     } catch (err: any) {
+      console.error('Error fetching outlets:', err);
       res.status(500).json({ error: 'Gagal mengambil daftar outlet' });
     }
   });
 
-  app.post('/api/outlets', (req, res) => {
+  app.post('/api/outlets', async (req, res) => {
     try {
-      const outlet = dbService.createOutlet(req.body);
+      const outlet = await dbService.createOutlet(req.body);
       res.status(201).json(outlet);
     } catch (err: any) {
+      console.error('Error creating outlet:', err);
       res.status(400).json({ error: err.message || 'Gagal menambahkan outlet' });
     }
   });
 
-  app.put('/api/outlets/:id', (req, res) => {
+  app.put('/api/outlets/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const updated = dbService.updateOutlet(id, req.body);
+      const updated = await dbService.updateOutlet(id, req.body);
       if (!updated) return res.status(404).json({ error: 'Outlet tidak ditemukan' });
       res.json(updated);
     } catch (err: any) {
+      console.error('Error updating outlet:', err);
       res.status(400).json({ error: err.message || 'Gagal memperbarui outlet' });
     }
   });
 
-  app.delete('/api/outlets/:id', (req, res) => {
+  app.delete('/api/outlets/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const success = dbService.deleteOutlet(id);
+      const success = await dbService.deleteOutlet(id);
       if (!success) return res.status(404).json({ error: 'Outlet tidak ditemukan' });
       res.json({ success: true, message: 'Outlet berhasil dihapus' });
     } catch (err: any) {
+      console.error('Error deleting outlet:', err);
       res.status(500).json({ error: 'Gagal menghapus outlet' });
     }
   });
 
   // Master Products (Sales) API
-  app.get('/api/products', (req, res) => {
+  app.get('/api/products', async (req, res) => {
     try {
       const { outlet_type } = req.query;
-      const products = dbService.getProducts(outlet_type as string);
+      const products = await dbService.getProducts(outlet_type as string);
       res.json(products);
     } catch (err: any) {
       console.error('Error fetching products:', err);
@@ -87,59 +103,63 @@ async function startServer() {
     }
   });
 
-  app.post('/api/products', (req, res) => {
+  app.post('/api/products', async (req, res) => {
     try {
-      const product = dbService.createProduct(req.body);
+      const product = await dbService.createProduct(req.body);
       res.status(201).json(product);
     } catch (err: any) {
+      console.error('Error creating product:', err);
       res.status(400).json({ error: err.message || 'Gagal menambahkan produk' });
     }
   });
 
-  app.put('/api/products/:id', (req, res) => {
+  app.put('/api/products/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const updated = dbService.updateProduct(id, req.body);
+      const updated = await dbService.updateProduct(id, req.body);
       if (!updated) return res.status(404).json({ error: 'Produk tidak ditemukan' });
       res.json(updated);
     } catch (err: any) {
+      console.error('Error updating product:', err);
       res.status(400).json({ error: err.message || 'Gagal memperbarui produk' });
     }
   });
 
-  app.delete('/api/products/:id', (req, res) => {
+  app.delete('/api/products/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const success = dbService.deleteProduct(id);
+      const success = await dbService.deleteProduct(id);
       if (!success) return res.status(404).json({ error: 'Produk tidak ditemukan' });
       res.json({ success: true, message: 'Produk berhasil dihapus' });
     } catch (err: any) {
+      console.error('Error deleting product:', err);
       res.status(500).json({ error: 'Gagal menghapus produk' });
     }
   });
 
   // Master Stock Items API (Beginning Stock)
-  app.get('/api/master/stock-items', (req, res) => {
+  app.get('/api/master/stock-items', async (req, res) => {
     try {
-      res.json(dbService.getStockItems());
+      const items = await dbService.getStockItems();
+      res.json(items);
     } catch (err: any) {
       res.status(500).json({ error: 'Gagal mengambil item stok' });
     }
   });
 
-  app.post('/api/master/stock-items', (req, res) => {
+  app.post('/api/master/stock-items', async (req, res) => {
     try {
-      const item = dbService.createStockItem(req.body);
+      const item = await dbService.createStockItem(req.body);
       res.status(201).json(item);
     } catch (err: any) {
       res.status(400).json({ error: err.message || 'Gagal menambahkan item stok' });
     }
   });
 
-  app.put('/api/master/stock-items/:id', (req, res) => {
+  app.put('/api/master/stock-items/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const updated = dbService.updateStockItem(id, req.body);
+      const updated = await dbService.updateStockItem(id, req.body);
       if (!updated) return res.status(404).json({ error: 'Item stok tidak ditemukan' });
       res.json(updated);
     } catch (err: any) {
@@ -147,10 +167,10 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/master/stock-items/:id', (req, res) => {
+  app.delete('/api/master/stock-items/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const success = dbService.deleteStockItem(id);
+      const success = await dbService.deleteStockItem(id);
       if (!success) return res.status(404).json({ error: 'Item stok tidak ditemukan' });
       res.json({ success: true, message: 'Item stok berhasil dihapus' });
     } catch (err: any) {
@@ -159,27 +179,28 @@ async function startServer() {
   });
 
   // Master Tosser Items API (Tosser In / Out)
-  app.get('/api/master/tosser-items', (req, res) => {
+  app.get('/api/master/tosser-items', async (req, res) => {
     try {
-      res.json(dbService.getTosserItems());
+      const items = await dbService.getTosserItems();
+      res.json(items);
     } catch (err: any) {
       res.status(500).json({ error: 'Gagal mengambil item tosser' });
     }
   });
 
-  app.post('/api/master/tosser-items', (req, res) => {
+  app.post('/api/master/tosser-items', async (req, res) => {
     try {
-      const item = dbService.createTosserItem(req.body);
+      const item = await dbService.createTosserItem(req.body);
       res.status(201).json(item);
     } catch (err: any) {
       res.status(400).json({ error: err.message || 'Gagal menambahkan item tosser' });
     }
   });
 
-  app.put('/api/master/tosser-items/:id', (req, res) => {
+  app.put('/api/master/tosser-items/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const updated = dbService.updateTosserItem(id, req.body);
+      const updated = await dbService.updateTosserItem(id, req.body);
       if (!updated) return res.status(404).json({ error: 'Item tosser tidak ditemukan' });
       res.json(updated);
     } catch (err: any) {
@@ -187,10 +208,10 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/master/tosser-items/:id', (req, res) => {
+  app.delete('/api/master/tosser-items/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const success = dbService.deleteTosserItem(id);
+      const success = await dbService.deleteTosserItem(id);
       if (!success) return res.status(404).json({ error: 'Item tosser tidak ditemukan' });
       res.json({ success: true, message: 'Item tosser berhasil dihapus' });
     } catch (err: any) {
@@ -199,27 +220,28 @@ async function startServer() {
   });
 
   // Master Expense Categories API (Pengeluaran)
-  app.get('/api/master/expense-categories', (req, res) => {
+  app.get('/api/master/expense-categories', async (req, res) => {
     try {
-      res.json(dbService.getExpenseCategories());
+      const categories = await dbService.getExpenseCategories();
+      res.json(categories);
     } catch (err: any) {
       res.status(500).json({ error: 'Gagal mengambil kategori pengeluaran' });
     }
   });
 
-  app.post('/api/master/expense-categories', (req, res) => {
+  app.post('/api/master/expense-categories', async (req, res) => {
     try {
-      const cat = dbService.createExpenseCategory(req.body);
+      const cat = await dbService.createExpenseCategory(req.body);
       res.status(201).json(cat);
     } catch (err: any) {
       res.status(400).json({ error: err.message || 'Gagal menambahkan kategori pengeluaran' });
     }
   });
 
-  app.put('/api/master/expense-categories/:id', (req, res) => {
+  app.put('/api/master/expense-categories/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const updated = dbService.updateExpenseCategory(id, req.body);
+      const updated = await dbService.updateExpenseCategory(id, req.body);
       if (!updated) return res.status(404).json({ error: 'Kategori pengeluaran tidak ditemukan' });
       res.json(updated);
     } catch (err: any) {
@@ -227,10 +249,10 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/master/expense-categories/:id', (req, res) => {
+  app.delete('/api/master/expense-categories/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const success = dbService.deleteExpenseCategory(id);
+      const success = await dbService.deleteExpenseCategory(id);
       if (!success) return res.status(404).json({ error: 'Kategori pengeluaran tidak ditemukan' });
       res.json({ success: true, message: 'Kategori pengeluaran berhasil dihapus' });
     } catch (err: any) {
@@ -239,27 +261,28 @@ async function startServer() {
   });
 
   // Master Ending Stock Items API (Sisa Stok)
-  app.get('/api/master/ending-stock-items', (req, res) => {
+  app.get('/api/master/ending-stock-items', async (req, res) => {
     try {
-      res.json(dbService.getEndingStockItems());
+      const items = await dbService.getEndingStockItems();
+      res.json(items);
     } catch (err: any) {
       res.status(500).json({ error: 'Gagal mengambil item sisa stok' });
     }
   });
 
-  app.post('/api/master/ending-stock-items', (req, res) => {
+  app.post('/api/master/ending-stock-items', async (req, res) => {
     try {
-      const item = dbService.createEndingStockItem(req.body);
+      const item = await dbService.createEndingStockItem(req.body);
       res.status(201).json(item);
     } catch (err: any) {
       res.status(400).json({ error: err.message || 'Gagal menambahkan item sisa stok' });
     }
   });
 
-  app.put('/api/master/ending-stock-items/:id', (req, res) => {
+  app.put('/api/master/ending-stock-items/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const updated = dbService.updateEndingStockItem(id, req.body);
+      const updated = await dbService.updateEndingStockItem(id, req.body);
       if (!updated) return res.status(404).json({ error: 'Item sisa stok tidak ditemukan' });
       res.json(updated);
     } catch (err: any) {
@@ -267,10 +290,10 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/master/ending-stock-items/:id', (req, res) => {
+  app.delete('/api/master/ending-stock-items/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const success = dbService.deleteEndingStockItem(id);
+      const success = await dbService.deleteEndingStockItem(id);
       if (!success) return res.status(404).json({ error: 'Item sisa stok tidak ditemukan' });
       res.json({ success: true, message: 'Item sisa stok berhasil dihapus' });
     } catch (err: any) {
@@ -279,10 +302,10 @@ async function startServer() {
   });
 
   // Get Reports List
-  app.get('/api/reports', (req, res) => {
+  app.get('/api/reports', async (req, res) => {
     try {
       const { filter, outlet, startDate, endDate } = req.query;
-      const reports = dbService.getReports({
+      const reports = await dbService.getReports({
         filter: filter as string,
         outlet: outlet as string,
         startDate: startDate as string,
@@ -296,14 +319,14 @@ async function startServer() {
   });
 
   // Get Single Report by ID
-  app.get('/api/reports/:id', (req, res) => {
+  app.get('/api/reports/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
         return res.status(400).json({ error: 'ID laporan tidak valid' });
       }
 
-      const report = dbService.getReportById(id);
+      const report = await dbService.getReportById(id);
       if (!report) {
         return res.status(404).json({ error: 'Laporan tidak ditemukan' });
       }
@@ -316,23 +339,23 @@ async function startServer() {
   });
 
   // Create New Report
-  app.post('/api/reports', (req, res) => {
+  app.post('/api/reports', async (req, res) => {
     try {
       const body = req.body;
       if (!body.report_date || !body.outlet_name || !body.staff_name || !String(body.staff_name).trim()) {
         return res.status(400).json({ error: 'Tanggal laporan, nama outlet, dan nama pegawai wajib diisi' });
       }
 
-      const newReport = dbService.createReport(body);
+      const newReport = await dbService.createReport(body);
       res.status(201).json(newReport);
     } catch (err: any) {
       console.error('Error creating report:', err);
-      res.status(500).json({ error: 'Gagal menyimpan laporan' });
+      res.status(500).json({ error: err.message || 'Gagal menyimpan laporan' });
     }
   });
 
   // Update Report
-  app.put('/api/reports/:id', (req, res) => {
+  app.put('/api/reports/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
@@ -344,7 +367,7 @@ async function startServer() {
         return res.status(400).json({ error: 'Tanggal laporan, nama outlet, dan nama pegawai wajib diisi' });
       }
 
-      const updated = dbService.updateReport(id, body);
+      const updated = await dbService.updateReport(id, body);
       if (!updated) {
         return res.status(404).json({ error: 'Laporan tidak ditemukan' });
       }
@@ -352,19 +375,19 @@ async function startServer() {
       res.json(updated);
     } catch (err: any) {
       console.error('Error updating report:', err);
-      res.status(500).json({ error: 'Gagal memperbarui laporan' });
+      res.status(500).json({ error: err.message || 'Gagal memperbarui laporan' });
     }
   });
 
   // Delete Report
-  app.delete('/api/reports/:id', (req, res) => {
+  app.delete('/api/reports/:id', async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
         return res.status(400).json({ error: 'ID laporan tidak valid' });
       }
 
-      const success = dbService.deleteReport(id);
+      const success = await dbService.deleteReport(id);
       if (!success) {
         return res.status(404).json({ error: 'Laporan tidak ditemukan' });
       }
@@ -386,14 +409,13 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    // Express 4 wildcard catch-all
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server HD Fried Chicken running on http://0.0.0.0:${PORT}`);
+    console.log(`🚀 Server HD Fried Chicken running on http://0.0.0.0:${PORT}`);
   });
 }
 
