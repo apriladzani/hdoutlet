@@ -46,6 +46,26 @@ async function startServer() {
     }
   });
 
+  app.get('/api/settings/conversion', async (req, res) => {
+    try {
+      const settings = await dbService.getSettings();
+      res.json(settings.conversion);
+    } catch (err: any) {
+      console.error('Error fetching conversion settings:', err);
+      res.status(500).json({ error: 'Gagal mengambil pengaturan konversi' });
+    }
+  });
+
+  app.put('/api/settings/conversion', async (req, res) => {
+    try {
+      const updated = await dbService.updateConversionConfig(req.body);
+      res.json({ success: true, conversion: updated });
+    } catch (err: any) {
+      console.error('Error updating conversion settings:', err);
+      res.status(400).json({ error: err.message || 'Gagal mengubah pengaturan konversi' });
+    }
+  });
+
   // Outlets API
   app.get('/api/outlets', async (req, res) => {
     try {
@@ -134,6 +154,47 @@ async function startServer() {
     } catch (err: any) {
       console.error('Error deleting product:', err);
       res.status(500).json({ error: 'Gagal menghapus produk' });
+    }
+  });
+
+  // Master Barang API
+  app.get('/api/master/barang', async (req, res) => {
+    try {
+      const items = await dbService.getMasterBarang();
+      res.json(items);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Gagal mengambil data master barang' });
+    }
+  });
+
+  app.post('/api/master/barang', async (req, res) => {
+    try {
+      const item = await dbService.createMasterBarang(req.body);
+      res.status(201).json(item);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || 'Gagal menambahkan master barang' });
+    }
+  });
+
+  app.put('/api/master/barang/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const updated = await dbService.updateMasterBarang(id, req.body);
+      if (!updated) return res.status(404).json({ error: 'Master barang tidak ditemukan' });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || 'Gagal memperbarui master barang' });
+    }
+  });
+
+  app.delete('/api/master/barang/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const success = await dbService.deleteMasterBarang(id);
+      if (!success) return res.status(404).json({ error: 'Master barang tidak ditemukan' });
+      res.json({ success: true, message: 'Master barang berhasil dihapus' });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Gagal menghapus master barang' });
     }
   });
 

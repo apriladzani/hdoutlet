@@ -4,10 +4,14 @@ import { mySqlService, initDatabase } from './mysql.ts';
 export { mySqlService, initDatabase };
 import {
   AdminSettings,
+  ChickenConversionConfig,
   DailyReport,
+  DEFAULT_CHICKEN_CONVERSION,
+  DEFAULT_MASTER_BARANG,
   DEFAULT_PRODUCTS,
   EndingStockMasterItem,
   ExpenseCategoryItem,
+  MasterBarangItem,
   OutletItem,
   OUTLETS,
   Product,
@@ -23,6 +27,7 @@ const DB_FILE = path.join(DATA_DIR, 'database.json');
 
 interface DatabaseSchema {
   settings?: AdminSettings;
+  master_barang?: MasterBarangItem[];
   outlets?: OutletItem[];
   products: Product[];
   stock_items?: StockMasterItem[];
@@ -132,6 +137,7 @@ const DEFAULT_TOSSER: TosserData = {
 
 export const DEFAULT_SETTINGS: AdminSettings = {
   admin_pin: '0825',
+  conversion: DEFAULT_CHICKEN_CONVERSION,
 };
 
 export const DEFAULT_OUTLETS: OutletItem[] = OUTLETS.map((name, idx) => ({
@@ -142,29 +148,29 @@ export const DEFAULT_OUTLETS: OutletItem[] = OUTLETS.map((name, idx) => ({
 }));
 
 export const DEFAULT_STOCK_ITEMS: StockMasterItem[] = [
-  { id: 1, key: 'ayam_mentah', name: 'Ayam Mentah', category: 'raw', unit: 'kg', active: true },
-  { id: 2, key: 'masak_ayam_pb', name: 'Masak Goreng Ayam PB', category: 'raw', unit: 'ekor/porsi', active: true },
-  { id: 3, key: 'masak_ayam_pk', name: 'Masak Goreng Ayam PK', category: 'raw', unit: 'ekor/porsi', active: true },
-  { id: 4, key: 'kulit_mentah', name: 'Kulit Mentah', category: 'raw', unit: 'kg', active: true },
-  { id: 5, key: 'beras', name: 'Beras', category: 'raw', unit: 'kg', active: true },
-  { id: 6, key: 'masak_nasi', name: 'Masak Nasi', category: 'raw', unit: 'kg', active: true },
-  { id: 7, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', category: 'ready', unit: 'pcs', active: true },
-  { id: 8, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', category: 'ready', unit: 'pcs', active: true },
-  { id: 9, key: 'goreng_kulit', name: 'Goreng Kulit', category: 'ready', unit: 'pcs', active: true },
-  { id: 13, key: 'goreng_kulit_ck', name: 'Kulit CK', category: 'ready', unit: 'pcs', active: true },
-  { id: 10, key: 'nasi', name: 'Nasi', category: 'ready', unit: 'pcs', active: true },
-  { id: 11, key: 's_chili_oil', name: 'S. Chili Oil', category: 'ready', unit: 'pcs', active: true },
-  { id: 12, key: 's_geprek', name: 'S. Geprek', category: 'ready', unit: 'pcs', active: true },
+  { id: 1, key: 'ayam_mentah', name: 'Ayam Mentah', category: 'raw', unit: 'kg', active: true, barang_id: 3 },
+  { id: 2, key: 'masak_ayam_pb', name: 'Masak Goreng Ayam PB', category: 'raw', unit: 'ekor/porsi', active: true, barang_id: 1 },
+  { id: 3, key: 'masak_ayam_pk', name: 'Masak Goreng Ayam PK', category: 'raw', unit: 'ekor/porsi', active: true, barang_id: 2 },
+  { id: 4, key: 'kulit_mentah', name: 'Kulit Mentah', category: 'raw', unit: 'kg', active: true, barang_id: 6 },
+  { id: 5, key: 'beras', name: 'Beras', category: 'raw', unit: 'kg', active: true, barang_id: 8 },
+  { id: 6, key: 'masak_nasi', name: 'Masak Nasi', category: 'raw', unit: 'kg', active: true, barang_id: 7 },
+  { id: 7, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', category: 'ready', unit: 'pcs', active: true, barang_id: 1 },
+  { id: 8, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', category: 'ready', unit: 'pcs', active: true, barang_id: 2 },
+  { id: 9, key: 'goreng_kulit', name: 'Goreng Kulit', category: 'ready', unit: 'pcs', active: true, barang_id: 4 },
+  { id: 13, key: 'goreng_kulit_ck', name: 'Kulit CK', category: 'ready', unit: 'pcs', active: true, barang_id: 5 },
+  { id: 10, key: 'nasi', name: 'Nasi', category: 'ready', unit: 'pcs', active: true, barang_id: 7 },
+  { id: 11, key: 's_chili_oil', name: 'S. Chili Oil', category: 'ready', unit: 'pcs', active: true, barang_id: 9 },
+  { id: 12, key: 's_geprek', name: 'S. Geprek', category: 'ready', unit: 'pcs', active: true, barang_id: 10 },
 ];
 
 export const DEFAULT_TOSSER_ITEMS: TosserMasterItem[] = [
-  { id: 1, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', type: 'both', unit: 'pcs', active: true },
-  { id: 2, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', type: 'both', unit: 'pcs', active: true },
-  { id: 3, key: 'goreng_kulit', name: 'Goreng Kulit', type: 'both', unit: 'pcs', active: true },
-  { id: 7, key: 'goreng_kulit_ck', name: 'Kulit CK', type: 'both', unit: 'pcs', active: true },
-  { id: 4, key: 'nasi', name: 'Nasi', type: 'both', unit: 'pcs', active: true },
-  { id: 5, key: 's_chili_oil', name: 'S. Chili Oil', type: 'both', unit: 'pcs', active: true },
-  { id: 6, key: 's_geprek', name: 'S. Geprek', type: 'both', unit: 'pcs', active: true },
+  { id: 1, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', type: 'both', unit: 'pcs', active: true, barang_id: 1 },
+  { id: 2, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', type: 'both', unit: 'pcs', active: true, barang_id: 2 },
+  { id: 3, key: 'goreng_kulit', name: 'Goreng Kulit', type: 'both', unit: 'pcs', active: true, barang_id: 4 },
+  { id: 7, key: 'goreng_kulit_ck', name: 'Kulit CK', type: 'both', unit: 'pcs', active: true, barang_id: 5 },
+  { id: 4, key: 'nasi', name: 'Nasi', type: 'both', unit: 'pcs', active: true, barang_id: 7 },
+  { id: 5, key: 's_chili_oil', name: 'S. Chili Oil', type: 'both', unit: 'pcs', active: true, barang_id: 9 },
+  { id: 6, key: 's_geprek', name: 'S. Geprek', type: 'both', unit: 'pcs', active: true, barang_id: 10 },
 ];
 
 export const DEFAULT_EXPENSE_CATEGORIES: ExpenseCategoryItem[] = [
@@ -430,17 +436,11 @@ export function calculateTotals(
   }, 0);
 
   // Validate and calculate expenses
-  const gas = Math.max(0, Number(safeExpenses.gas) || 0);
-  const galon = Math.max(0, Number(safeExpenses.galon) || 0);
-  const clean_tools = Math.max(0, Number(safeExpenses.clean_tools) || 0);
-  const kulit = Math.max(0, Number(safeExpenses.kulit) || 0);
-  const meal = Math.max(0, Number(safeExpenses.meal) || 0);
-  const bonus = Math.max(0, Number(safeExpenses.bonus) || 0);
-  const lain_lain = Math.max(0, Number(safeExpenses.lain_lain) || 0);
-  const beras = Math.max(0, Number(safeExpenses.beras) || 0);
-  const saus = Math.max(0, Number(safeExpenses.saus) || 0);
-  const minyak = Math.max(0, Number(safeExpenses.minyak) || 0);
-  const total_expense = gas + galon + clean_tools + kulit + meal + bonus + lain_lain + beras + saus + minyak;
+  const total_expense = Object.entries(safeExpenses).reduce((acc, [k, v]) => {
+    if (k === 'total_expense' || k === 'lain_lain_keterangan') return acc;
+    const num = Number(v);
+    return isNaN(num) ? acc : acc + Math.max(0, num);
+  }, 0);
 
   const validPromo = Math.max(0, Number(promo) || 0);
 
@@ -985,7 +985,31 @@ export const jsonDbService = {
   // Settings & PIN
   getSettings(): AdminSettings {
     const db = loadDatabase();
-    return db.settings || { ...DEFAULT_SETTINGS };
+    return {
+      admin_pin: db.settings?.admin_pin || DEFAULT_SETTINGS.admin_pin,
+      conversion: db.settings?.conversion || DEFAULT_CHICKEN_CONVERSION,
+    };
+  },
+
+  updateConversionConfig(cfg: Partial<ChickenConversionConfig>): ChickenConversionConfig {
+    const db = loadDatabase();
+    const current = db.settings?.conversion || DEFAULT_CHICKEN_CONVERSION;
+    const pbRatio = Number(cfg.pb_ratio);
+    const pkRatio = Number(cfg.pk_ratio);
+    const pbWeight = Number(cfg.pb_kg_weight);
+    const pkWeight = Number(cfg.pk_kg_weight);
+    const riceRatio = Number(cfg.masak_nasi_ratio);
+
+    const updated: ChickenConversionConfig = {
+      pb_ratio: !isNaN(pbRatio) && pbRatio > 0 ? pbRatio : current.pb_ratio,
+      pk_ratio: !isNaN(pkRatio) && pkRatio > 0 ? pkRatio : current.pk_ratio,
+      pb_kg_weight: !isNaN(pbWeight) && pbWeight > 0 ? pbWeight : current.pb_kg_weight,
+      pk_kg_weight: !isNaN(pkWeight) && pkWeight > 0 ? pkWeight : current.pk_kg_weight,
+      masak_nasi_ratio: !isNaN(riceRatio) && riceRatio > 0 ? riceRatio : (current.masak_nasi_ratio ?? 12),
+    };
+    db.settings = { ...(db.settings || DEFAULT_SETTINGS), conversion: updated };
+    saveDatabase(db);
+    return updated;
   },
 
   updateAdminPin(newPin: string): { success: boolean; pin: string } {
@@ -1069,6 +1093,7 @@ export const jsonDbService = {
       outlet_type: data.outlet_type || 'traditional',
       description: data.description || '',
       items_composition: data.items_composition,
+      barang_id: data.barang_id ? Number(data.barang_id) : undefined,
     };
     products.push(newProduct);
     db.products = products;
@@ -1090,6 +1115,7 @@ export const jsonDbService = {
       outlet_type: data.outlet_type !== undefined ? data.outlet_type : existing.outlet_type,
       description: data.description !== undefined ? data.description : existing.description,
       items_composition: data.items_composition !== undefined ? data.items_composition : existing.items_composition,
+      barang_id: data.barang_id !== undefined ? (data.barang_id ? Number(data.barang_id) : undefined) : existing.barang_id,
     };
     db.products = products;
     saveDatabase(db);
@@ -1106,10 +1132,72 @@ export const jsonDbService = {
     return true;
   },
 
+  // Master Barang CRUD
+  getMasterBarang(): MasterBarangItem[] {
+    const db = loadDatabase();
+    return db.master_barang || [...DEFAULT_MASTER_BARANG];
+  },
+
+  createMasterBarang(data: Partial<MasterBarangItem>): MasterBarangItem {
+    const db = loadDatabase();
+    const items = db.master_barang || [...DEFAULT_MASTER_BARANG];
+    const name = String(data.name || '').trim();
+    if (!name) throw new Error('Nama barang wajib diisi');
+    const newId = items.length > 0 ? Math.max(...items.map((i) => i.id)) + 1 : 1;
+    const newItem: MasterBarangItem = {
+      id: newId,
+      code: data.code || `BRG-${newId}`,
+      name,
+      category: data.category || 'ready',
+      unit: data.unit || 'pcs',
+      description: data.description || '',
+      active: data.active !== undefined ? Boolean(data.active) : true,
+    };
+    items.push(newItem);
+    db.master_barang = items;
+    saveDatabase(db);
+    return newItem;
+  },
+
+  updateMasterBarang(id: number, data: Partial<MasterBarangItem>): MasterBarangItem | null {
+    const db = loadDatabase();
+    const items = db.master_barang || [...DEFAULT_MASTER_BARANG];
+    const index = items.findIndex((i) => i.id === id);
+    if (index === -1) return null;
+    const existing = items[index];
+    items[index] = {
+      ...existing,
+      code: data.code !== undefined ? String(data.code).trim() : existing.code,
+      name: data.name !== undefined ? String(data.name).trim() : existing.name,
+      category: data.category !== undefined ? data.category : existing.category,
+      unit: data.unit !== undefined ? String(data.unit).trim() : existing.unit,
+      description: data.description !== undefined ? String(data.description).trim() : existing.description,
+      active: data.active !== undefined ? Boolean(data.active) : existing.active,
+    };
+    db.master_barang = items;
+    saveDatabase(db);
+    return items[index];
+  },
+
+  deleteMasterBarang(id: number): boolean {
+    const db = loadDatabase();
+    const items = db.master_barang || [...DEFAULT_MASTER_BARANG];
+    const initLen = items.length;
+    db.master_barang = items.filter((i) => i.id !== id);
+    if (db.master_barang.length === initLen) return false;
+    saveDatabase(db);
+    return true;
+  },
+
   // Beginning Stock Items CRUD
   getStockItems(): StockMasterItem[] {
     const db = loadDatabase();
-    return db.stock_items || [...DEFAULT_STOCK_ITEMS];
+    const items = db.stock_items || [...DEFAULT_STOCK_ITEMS];
+    return items.map((item) => {
+      if (item.barang_id) return item;
+      const def = DEFAULT_STOCK_ITEMS.find((d) => d.key === item.key || d.name.toLowerCase() === item.name.toLowerCase());
+      return def?.barang_id ? { ...item, barang_id: def.barang_id } : item;
+    });
   },
 
   createStockItem(data: Partial<StockMasterItem>): StockMasterItem {
@@ -1126,6 +1214,7 @@ export const jsonDbService = {
       unit: data.unit || 'pcs',
       default_value: data.default_value || '',
       active: data.active !== undefined ? Boolean(data.active) : true,
+      barang_id: data.barang_id ? Number(data.barang_id) : undefined,
     };
     items.push(newItem);
     db.stock_items = items;
@@ -1146,6 +1235,7 @@ export const jsonDbService = {
       unit: data.unit !== undefined ? String(data.unit).trim() : existing.unit,
       default_value: data.default_value !== undefined ? String(data.default_value).trim() : existing.default_value,
       active: data.active !== undefined ? Boolean(data.active) : existing.active,
+      barang_id: data.barang_id !== undefined ? (data.barang_id ? Number(data.barang_id) : undefined) : existing.barang_id,
     };
     db.stock_items = items;
     saveDatabase(db);
@@ -1165,7 +1255,12 @@ export const jsonDbService = {
   // Tosser Items CRUD (In / Out)
   getTosserItems(): TosserMasterItem[] {
     const db = loadDatabase();
-    return db.tosser_items || [...DEFAULT_TOSSER_ITEMS];
+    const items = db.tosser_items || [...DEFAULT_TOSSER_ITEMS];
+    return items.map((item) => {
+      if (item.barang_id) return item;
+      const def = DEFAULT_TOSSER_ITEMS.find((d) => d.key === item.key || d.name.toLowerCase() === item.name.toLowerCase());
+      return def?.barang_id ? { ...item, barang_id: def.barang_id } : item;
+    });
   },
 
   createTosserItem(data: Partial<TosserMasterItem>): TosserMasterItem {
@@ -1181,6 +1276,7 @@ export const jsonDbService = {
       type: data.type === 'in' ? 'in' : data.type === 'out' ? 'out' : 'both',
       unit: data.unit || 'pcs',
       active: data.active !== undefined ? Boolean(data.active) : true,
+      barang_id: data.barang_id ? Number(data.barang_id) : undefined,
     };
     items.push(newItem);
     db.tosser_items = items;
@@ -1200,6 +1296,7 @@ export const jsonDbService = {
       type: data.type !== undefined ? data.type : existing.type,
       unit: data.unit !== undefined ? String(data.unit).trim() : existing.unit,
       active: data.active !== undefined ? Boolean(data.active) : existing.active,
+      barang_id: data.barang_id !== undefined ? (data.barang_id ? Number(data.barang_id) : undefined) : existing.barang_id,
     };
     db.tosser_items = items;
     saveDatabase(db);
@@ -1219,7 +1316,11 @@ export const jsonDbService = {
   // Expense Categories CRUD
   getExpenseCategories(): ExpenseCategoryItem[] {
     const db = loadDatabase();
-    return db.expense_categories || [...DEFAULT_EXPENSE_CATEGORIES];
+    const raw = db.expense_categories || [...DEFAULT_EXPENSE_CATEGORIES];
+    return raw.map((c, idx) => ({
+      ...c,
+      key: c.key || c.name.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_') || `exp_${c.id || idx + 1}`,
+    }));
   },
 
   createExpenseCategory(data: Partial<ExpenseCategoryItem>): ExpenseCategoryItem {

@@ -10,13 +10,15 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { DailyReport } from '../types.ts';
+import { ChickenConversionConfig, DailyReport } from '../types.ts';
 import {
   calculateLoss,
   calculateLossPercentage,
   calculateExpensePercentage,
   formatPercentage,
   LOSS_RATES,
+  GORENG_AYAM_PB_RATIO,
+  GORENG_AYAM_PK_RATIO,
 } from '../utils/stockCalculations.ts';
 import {
   formatRupiah,
@@ -30,17 +32,20 @@ interface ReportDetailModalProps {
   onClose: () => void;
   onEdit: (report: DailyReport) => void;
   onDelete: (id: number) => void;
+  conversion?: ChickenConversionConfig;
 }
 
 // Helper to get formatted display for Olahan Dapur Goreng PB/PK
-function getOlahanPbDisplay(stock?: DailyReport['stock']): string {
+function getOlahanPbDisplay(stock?: DailyReport['stock'], conversion?: ChickenConversionConfig): string {
   if (!stock) return '-';
   const masak = stock.masak_ayam_pb?.trim();
+  const pbRatio = conversion?.pb_ratio ?? GORENG_AYAM_PB_RATIO;
+  const pbWeight = conversion?.pb_kg_weight ?? 0.5;
   if (masak) {
     const num = Number(masak);
     if (!isNaN(num) && num > 0) {
-      const kg = num * 0.5;
-      const pcs = num * 5;
+      const kg = Math.round(num * pbWeight * 100) / 100;
+      const pcs = num * pbRatio;
       return `${masak} (${kg} kg • ${pcs} pcs)`;
     }
     return `${masak} kg`;
@@ -54,14 +59,16 @@ function getOlahanPbDisplay(stock?: DailyReport['stock']): string {
   return '-';
 }
 
-function getOlahanPkDisplay(stock?: DailyReport['stock']): string {
+function getOlahanPkDisplay(stock?: DailyReport['stock'], conversion?: ChickenConversionConfig): string {
   if (!stock) return '-';
   const masak = stock.masak_ayam_pk?.trim();
+  const pkRatio = conversion?.pk_ratio ?? GORENG_AYAM_PK_RATIO;
+  const pkWeight = conversion?.pk_kg_weight ?? 0.5;
   if (masak) {
     const num = Number(masak);
     if (!isNaN(num) && num > 0) {
-      const kg = num * 0.5;
-      const pcs = num * 4;
+      const kg = Math.round(num * pkWeight * 100) / 100;
+      const pcs = num * pkRatio;
       return `${masak} (${kg} kg • ${pcs} pcs)`;
     }
     return `${masak} kg`;
@@ -75,31 +82,33 @@ function getOlahanPkDisplay(stock?: DailyReport['stock']): string {
   return '-';
 }
 
-function getSiapJualPbDisplay(stock?: DailyReport['stock']): string {
+function getSiapJualPbDisplay(stock?: DailyReport['stock'], conversion?: ChickenConversionConfig): string {
   if (!stock) return '-';
   if (stock.goreng_ayam_pb?.trim() && stock.goreng_ayam_pb !== '0') {
     return `${stock.goreng_ayam_pb} pcs`;
   }
   const masak = stock.masak_ayam_pb?.trim();
+  const pbRatio = conversion?.pb_ratio ?? GORENG_AYAM_PB_RATIO;
   if (masak) {
     const num = Number(masak);
     if (!isNaN(num) && num > 0) {
-      return `${num * 5} pcs`;
+      return `${num * pbRatio} pcs`;
     }
   }
   return stock.goreng_ayam_pb?.trim() ? `${stock.goreng_ayam_pb} pcs` : '-';
 }
 
-function getSiapJualPkDisplay(stock?: DailyReport['stock']): string {
+function getSiapJualPkDisplay(stock?: DailyReport['stock'], conversion?: ChickenConversionConfig): string {
   if (!stock) return '-';
   if (stock.goreng_ayam_pk?.trim() && stock.goreng_ayam_pk !== '0') {
     return `${stock.goreng_ayam_pk} pcs`;
   }
   const masak = stock.masak_ayam_pk?.trim();
+  const pkRatio = conversion?.pk_ratio ?? GORENG_AYAM_PK_RATIO;
   if (masak) {
     const num = Number(masak);
     if (!isNaN(num) && num > 0) {
-      return `${num * 4} pcs`;
+      return `${num * pkRatio} pcs`;
     }
   }
   return stock.goreng_ayam_pk?.trim() ? `${stock.goreng_ayam_pk} pcs` : '-';
@@ -110,6 +119,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
   onClose,
   onEdit,
   onDelete,
+  conversion,
 }) => {
   const [copiedWa, setCopiedWa] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -227,13 +237,13 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                   <div className="p-1 print:py-0.5 print:px-1 bg-red-50 rounded border border-red-200/60">
                     <span className="text-red-800 block text-[9px] print:text-[6pt]">Goreng PB</span>
                     <span className="font-bold text-red-950">
-                      {getOlahanPbDisplay(report.stock)}
+                      {getOlahanPbDisplay(report.stock, conversion)}
                     </span>
                   </div>
                   <div className="p-1 print:py-0.5 print:px-1 bg-red-50 rounded border border-red-200/60">
                     <span className="text-red-800 block text-[9px] print:text-[6pt]">Goreng PK</span>
                     <span className="font-bold text-red-950">
-                      {getOlahanPkDisplay(report.stock)}
+                      {getOlahanPkDisplay(report.stock, conversion)}
                     </span>
                   </div>
                   <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60">
@@ -271,7 +281,6 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     <div className="bg-white/80 rounded py-0.5"><span className="text-slate-400 text-[8px] print:text-[5.5pt] block">Geprek</span><span className="font-bold text-emerald-950">{report.stock?.tosser_in?.s_geprek || '0'}</span></div>
                   </div>
                 </div>
-
                 <div className="p-1.5 print:p-0.5 bg-rose-50/50 rounded print:rounded border border-rose-200">
                   <span className="text-[9px] print:text-[6pt] font-bold text-rose-900 block mb-0.5">
                     📤 Tosser Out:
@@ -294,8 +303,8 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                   Produk Siap Jual (Total Stok Awal):
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 print:grid-cols-7 gap-1.5 print:gap-1">
-                  <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60"><span className="text-slate-500 block text-[9px] print:text-[6pt]">Goreng PB</span><span className="font-bold">{getSiapJualPbDisplay(report.stock)}</span></div>
-                  <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60"><span className="text-slate-500 block text-[9px] print:text-[6pt]">Goreng PK</span><span className="font-bold">{getSiapJualPkDisplay(report.stock)}</span></div>
+                  <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60"><span className="text-slate-500 block text-[9px] print:text-[6pt]">Goreng PB</span><span className="font-bold">{getSiapJualPbDisplay(report.stock, conversion)}</span></div>
+                  <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60"><span className="text-slate-500 block text-[9px] print:text-[6pt]">Goreng PK</span><span className="font-bold">{getSiapJualPkDisplay(report.stock, conversion)}</span></div>
                   <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60"><span className="text-slate-500 block text-[9px] print:text-[6pt]">Goreng Kulit</span><span className="font-bold">{report.stock?.goreng_kulit || '-'} pcs</span></div>
                   <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60"><span className="text-slate-500 block text-[9px] print:text-[6pt]">Kulit CK</span><span className="font-bold">{report.stock?.goreng_kulit_ck || '-'} pcs</span></div>
                   <div className="p-1 print:py-0.5 print:px-1 bg-slate-50 rounded border border-slate-200/60"><span className="text-slate-500 block text-[9px] print:text-[6pt]">Nasi</span><span className="font-bold">{report.stock?.nasi || '-'} pcs</span></div>
@@ -430,13 +439,29 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     </div>
                   </div>
 
-                  {(report.expenses?.beras || report.expenses?.saus || report.expenses?.minyak) ? (
-                    <div className="flex flex-wrap gap-2 text-[10px] print:text-[6.5pt] text-slate-500">
-                      {report.expenses?.beras ? <span>Beras: {formatRupiah(report.expenses.beras)}</span> : null}
-                      {report.expenses?.saus ? <span>Saus: {formatRupiah(report.expenses.saus)}</span> : null}
-                      {report.expenses?.minyak ? <span>Minyak: {formatRupiah(report.expenses.minyak)}</span> : null}
-                    </div>
-                  ) : null}
+                  {/* Additional & Custom Expenses */}
+                  {(() => {
+                    const standardKeys = new Set([
+                      'gas', 'galon', 'clean_tools', 'kulit', 'meal', 'bonus', 'lain_lain', 'lain_lain_keterangan', 'total_expense'
+                    ]);
+                    const customItems = Object.entries(report.expenses || {}).filter(([k, v]) => {
+                      return !standardKeys.has(k) && Number(v) > 0;
+                    });
+                    if (customItems.length === 0) return null;
+                    return (
+                      <div className="flex flex-wrap gap-2.5 text-[10px] print:text-[6.5pt] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200">
+                        {customItems.map(([k, v]) => {
+                          const formattedLabel = k.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+                          return (
+                            <span key={k} className="inline-flex items-center gap-1 font-semibold">
+                              <span className="text-slate-500">{formattedLabel}:</span>
+                              <span className="font-bold text-slate-900">{formatRupiah(Number(v))}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
                   {(report.promo > 0 || report.promo_note) && (
                     <div className="p-1.5 print:py-0.5 print:px-1.5 bg-red-50 rounded border border-red-200 flex justify-between items-center">

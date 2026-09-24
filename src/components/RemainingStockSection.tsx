@@ -1,6 +1,6 @@
 import React from 'react';
 import { Archive, Sparkles, RefreshCw, CheckCircle2, Flame } from 'lucide-react';
-import { SaleItem, StockData } from '../types.ts';
+import { ChickenConversionConfig, EndingStockMasterItem, SaleItem, StockData, StockMasterItem } from '../types.ts';
 import {
   PRODUCT_STOCK_MAPPINGS,
   parseStockQuantity,
@@ -14,6 +14,9 @@ interface RemainingStockSectionProps {
   stock: StockData;
   sales: SaleItem[];
   onResetToCalculated: () => void;
+  conversion?: ChickenConversionConfig;
+  stockItems?: StockMasterItem[];
+  endingStockItems?: EndingStockMasterItem[];
 }
 
 export const RemainingStockSection: React.FC<RemainingStockSectionProps> = ({
@@ -22,16 +25,28 @@ export const RemainingStockSection: React.FC<RemainingStockSectionProps> = ({
   stock,
   sales,
   onResetToCalculated,
+  conversion,
+  stockItems,
+  endingStockItems,
 }) => {
-  const handleRemainingStockChange = (key: keyof StockData, value: string) => {
+  const handleRemainingStockChange = (key: string, value: string) => {
     setRemainingStock((prev) => ({ ...prev, [key]: value }));
   };
+
+  const standardRawKeys = ['ayam_mentah', 'masak_ayam_pb', 'masak_ayam_pk', 'kulit_mentah', 'masak_kulit_ck', 'beras', 'masak_nasi', 'goreng_ayam'];
+  const customRawItems = (stockItems || []).filter((s) => s.active !== false && s.category === 'raw' && !standardRawKeys.includes(s.key));
+
+  const standardSellKeys = ['goreng_ayam_pb', 'goreng_ayam_pk', 'goreng_kulit', 'goreng_kulit_ck', 'nasi', 's_chili_oil', 's_geprek'];
+  const customReadyItems = (stockItems || []).filter((s) => s.active !== false && s.category === 'ready' && !standardSellKeys.includes(s.key));
 
   // Calculation status for ready-to-sell products
   const calcDetails = calculateAllRemainingStock(stock, sales);
 
   // Calculation status for raw materials (ayam mentah & beras)
-  const rawCalcDetails = calculateRawMaterialsRemaining(stock);
+  const rawCalcDetails = calculateRawMaterialsRemaining(stock, conversion);
+
+  const pbWeight = conversion?.pb_kg_weight ?? 0.5;
+  const pkWeight = conversion?.pk_kg_weight ?? 0.5;
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
@@ -72,7 +87,7 @@ export const RemainingStockSection: React.FC<RemainingStockSectionProps> = ({
           <Sparkles className="w-4 h-4 text-[#E4002B] shrink-0 mt-0.5" />
           <div className="leading-relaxed">
             <span className="font-bold">Otomatis Ter-generate:</span> Sisa stok bahan baku dihitung dari{' '}
-            <span className="font-semibold underline">Ayam Mentah − Goreng Ayam (PB & PK @0.5kg)</span> &{' '}
+            <span className="font-semibold underline">Ayam Mentah − Goreng Ayam (PB @{pbWeight}kg & PK @{pkWeight}kg)</span> &{' '}
             <span className="font-semibold underline">Beras − Masak Nasi</span>, dan produk siap jual dari{' '}
             <span className="font-semibold underline">Stok Awal − Penjualan Offline</span>. Nilai tetap dapat disesuaikan jika terdapat selisih fisik saat tutup toko.
           </div>
@@ -256,6 +271,44 @@ export const RemainingStockSection: React.FC<RemainingStockSectionProps> = ({
                 </div>
               );
             })()}
+
+            {/* Custom Raw Items from Kelola Data */}
+            {customRawItems.map((item) => {
+              const val = remainingStock[item.key] || '';
+              return (
+                <div
+                  key={`rem-raw-${item.key}`}
+                  className="bg-red-50/30 p-3 rounded-xl border border-red-200/70 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label
+                        htmlFor={`rem-input-${item.key}`}
+                        className="text-xs font-bold text-slate-800 truncate mr-1"
+                        title={item.name}
+                      >
+                        Sisa {item.name}
+                      </label>
+                      <span className="text-[10px] font-bold text-red-800 bg-red-100 px-1.5 py-0.5 rounded">
+                        {item.unit}
+                      </span>
+                    </div>
+                    <input
+                      id={`rem-input-${item.key}`}
+                      type="text"
+                      inputMode="decimal"
+                      value={val}
+                      onChange={(e) => handleRemainingStockChange(item.key, e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-white border border-slate-200 text-slate-800 rounded-lg px-2.5 py-1.5 text-sm font-semibold placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B] transition-all"
+                    />
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-red-100 text-[10px] text-slate-500">
+                    Bahan Baku Tambahan
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -326,6 +379,80 @@ export const RemainingStockSection: React.FC<RemainingStockSectionProps> = ({
                         Disesuaikan
                       </span>
                     ) : isAutoCalculated ? (
+                      <span className="text-emerald-700 font-bold bg-emerald-100/70 px-1 py-0.5 rounded">
+                        Otomatis
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Custom Ready Items from Kelola Data */}
+            {customReadyItems.map((item) => {
+              const matchingSale = sales.find(
+                (s) => s.product_name.toLowerCase() === item.name.toLowerCase() || (item.barang_id && (s as any).barang_id === item.barang_id)
+              );
+              const soldQty = matchingSale ? Number(matchingSale.quantity) || 0 : 0;
+              const stockVal = stock[item.key];
+              const stockNum = parseStockQuantity(stockVal);
+              const calcRem = stockNum !== null ? Math.max(0, stockNum - soldQty) : null;
+              const val = remainingStock[item.key] !== undefined && remainingStock[item.key] !== ''
+                ? remainingStock[item.key]
+                : (calcRem !== null ? calcRem.toString() : '');
+              const currentNum = parseStockQuantity(val);
+              const isManualOverride = calcRem !== null && currentNum !== null && currentNum !== calcRem;
+
+              return (
+                <div
+                  key={`rem-custom-sell-${item.key}`}
+                  className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70 relative flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label
+                        htmlFor={`rem-input-${item.key}`}
+                        className="text-xs font-bold text-slate-700 truncate mr-1"
+                        title={item.name}
+                      >
+                        {item.name}
+                      </label>
+                      <span className="text-[10px] font-medium text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
+                        {item.unit}
+                      </span>
+                    </div>
+
+                    <input
+                      id={`rem-input-${item.key}`}
+                      type="text"
+                      inputMode="numeric"
+                      value={val}
+                      onChange={(e) => handleRemainingStockChange(item.key, e.target.value)}
+                      placeholder="0"
+                      className={`w-full bg-white border rounded-lg px-2.5 py-1.5 text-sm font-semibold placeholder-slate-300 focus:outline-hidden focus:ring-2 transition-all ${
+                        isManualOverride
+                          ? 'border-red-400 text-red-900 focus:ring-[#E4002B]/20 focus:border-[#E4002B]'
+                          : 'border-slate-200 text-slate-800 focus:ring-[#E4002B]/20 focus:border-[#E4002B]'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Formula Breakdown Badge */}
+                  <div className="mt-1.5 flex items-center justify-between text-[10px]">
+                    {stockNum !== null ? (
+                      <span className="text-slate-600 font-medium">
+                        {stockNum} − {soldQty} ={' '}
+                        <strong className="text-slate-900 font-black">{calcRem} {item.unit}</strong>
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">Stok belum diisi</span>
+                    )}
+
+                    {isManualOverride ? (
+                      <span className="text-red-700 font-bold bg-red-100/70 px-1 py-0.5 rounded">
+                        Disesuaikan
+                      </span>
+                    ) : stockNum !== null ? (
                       <span className="text-emerald-700 font-bold bg-emerald-100/70 px-1 py-0.5 rounded">
                         Otomatis
                       </span>

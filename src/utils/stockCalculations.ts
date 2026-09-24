@@ -1,4 +1,4 @@
-import { SaleItem, StockData, TosserData } from '../types.ts';
+import { SaleItem, StockData, TosserData, ChickenConversionConfig, DEFAULT_CHICKEN_CONVERSION } from '../types.ts';
 
 export interface TosserProductConfig {
   key: keyof TosserData;
@@ -85,7 +85,7 @@ export interface ChickenRemainingDetail {
 /**
  * Calculates raw chicken remaining detail:
  * 1 kg whole chicken consists of:
- * - 0.5 kg PB cut (yields 5 pcs PB)
+ * - 0.5 kg PB cut (yields 6 pcs PB)
  * - 0.5 kg PK cut (yields 4 pcs PK)
  *
  * Example:
@@ -95,7 +95,8 @@ export interface ChickenRemainingDetail {
 export function calculateChickenRemainingDetail(
   rawAyamKg: number | null,
   pbCookCount: number,
-  pkCookCount: number
+  pkCookCount: number,
+  config?: Partial<ChickenConversionConfig>
 ): ChickenRemainingDetail {
   if (rawAyamKg === null || isNaN(rawAyamKg)) {
     return {
@@ -106,11 +107,17 @@ export function calculateChickenRemainingDetail(
     };
   }
 
-  const initialPbKg = Math.round(rawAyamKg * 0.5 * 100) / 100;
-  const initialPkKg = Math.round(rawAyamKg * 0.5 * 100) / 100;
+  const pbWeight = config?.pb_kg_weight ?? AYAM_PB_KG_WEIGHT;
+  const pkWeight = config?.pk_kg_weight ?? AYAM_PK_KG_WEIGHT;
+  const totalPairWeight = pbWeight + pkWeight;
+  const pbRatioFraction = totalPairWeight > 0 ? pbWeight / totalPairWeight : 0.5;
+  const pkRatioFraction = totalPairWeight > 0 ? pkWeight / totalPairWeight : 0.5;
 
-  const usedPbKg = Math.round(Math.max(0, pbCookCount) * 0.5 * 100) / 100;
-  const usedPkKg = Math.round(Math.max(0, pkCookCount) * 0.5 * 100) / 100;
+  const initialPbKg = Math.round(rawAyamKg * pbRatioFraction * 100) / 100;
+  const initialPkKg = Math.round(rawAyamKg * pkRatioFraction * 100) / 100;
+
+  const usedPbKg = Math.round(Math.max(0, pbCookCount) * pbWeight * 100) / 100;
+  const usedPkKg = Math.round(Math.max(0, pkCookCount) * pkWeight * 100) / 100;
 
   const remPbKg = Math.round(Math.max(0, initialPbKg - usedPbKg) * 100) / 100;
   const remPkKg = Math.round(Math.max(0, initialPkKg - usedPkKg) * 100) / 100;
@@ -120,11 +127,11 @@ export function calculateChickenRemainingDetail(
   if (totalRem === 0 && (usedPbKg > 0 || usedPkKg > 0)) {
     description = 'Habis (0 kg)';
   } else {
-    // Setiap 0.5 kg PB + 0.5 kg PK dihitung sebagai 1 kg ayam utuh (bukan 0.5pb 0.5pk)
-    const pairKg = Math.min(remPbKg, remPkKg);
-    const wholeChickenKg = Math.round(pairKg * 2 * 100) / 100;
-    const excessPb = Math.round(Math.max(0, remPbKg - pairKg) * 100) / 100;
-    const excessPk = Math.round(Math.max(0, remPkKg - pairKg) * 100) / 100;
+    // Setiap pasangan PB + PK dihitung sebagai ayam utuh
+    const pairCount = pbWeight > 0 && pkWeight > 0 ? Math.min(remPbKg / pbWeight, remPkKg / pkWeight) : 0;
+    const wholeChickenKg = Math.round(pairCount * totalPairWeight * 100) / 100;
+    const excessPb = Math.round(Math.max(0, remPbKg - pairCount * pbWeight) * 100) / 100;
+    const excessPk = Math.round(Math.max(0, remPkKg - pairCount * pkWeight) * 100) / 100;
 
     if (wholeChickenKg > 0 && excessPk > 0) {
       description = `${wholeChickenKg} kg ${excessPk} Ayam PK`;
@@ -151,11 +158,12 @@ export function calculateChickenRemainingDetail(
 
 /**
  * Calculates remaining stock for raw kitchen materials:
- * - Sisa Ayam Mentah = Stok Awal Ayam Mentah - Stok Awal Goreng Ayam (PB @0.5kg & PK @0.5kg)
+ * - Sisa Ayam Mentah = Stok Awal Ayam Mentah - Stok Awal Goreng Ayam (PB & PK)
  * - Sisa Beras = Stok Awal Beras - Stok Awal Masak Nasi
  */
 export function calculateRawMaterialsRemaining(
-  stock: StockData
+  stock: StockData,
+  config?: Partial<ChickenConversionConfig>
 ): Record<'ayam_mentah' | 'beras', RawMaterialCalculationResult> {
   const ayamInitial = parseStockQuantity(stock.ayam_mentah);
   const pbCount = parseStockQuantity(stock.masak_ayam_pb) || 0;
@@ -172,8 +180,8 @@ export function calculateRawMaterialsRemaining(
   };
 
   if (stock.masak_ayam_pb !== undefined || stock.masak_ayam_pk !== undefined || (pbCount > 0 || pkCount > 0)) {
-    chickenDetail = calculateChickenRemainingDetail(ayamInitial, pbCount, pkCount);
-    ayamUsed = calculateChickenTotalCookKg(pbCount, pkCount);
+    chickenDetail = calculateChickenRemainingDetail(ayamInitial, pbCount, pkCount, config);
+    ayamUsed = calculateChickenTotalCookKg(pbCount, pkCount, config);
     const parts: string[] = [];
     if (pbCount > 0) parts.push(`PB: ${pbCount}`);
     if (pkCount > 0) parts.push(`PK: ${pkCount}`);
@@ -181,11 +189,14 @@ export function calculateRawMaterialsRemaining(
   } else if (legacyGoreng !== null) {
     ayamUsed = legacyGoreng;
     usedLabel = 'Goreng Ayam';
+    const pbWeight = config?.pb_kg_weight ?? AYAM_PB_KG_WEIGHT;
+    const pkWeight = config?.pk_kg_weight ?? AYAM_PK_KG_WEIGHT;
+    const totalPairWeight = pbWeight + pkWeight;
     const rem = ayamInitial !== null ? Math.round(Math.max(0, ayamInitial - ayamUsed) * 100) / 100 : 0;
     chickenDetail = {
       totalRemainingKg: rem,
-      remainingPbKg: Math.round(rem * 0.5 * 100) / 100,
-      remainingPkKg: Math.round(rem * 0.5 * 100) / 100,
+      remainingPbKg: Math.round(rem * (pbWeight / totalPairWeight) * 100) / 100,
+      remainingPkKg: Math.round(rem * (pkWeight / totalPairWeight) * 100) / 100,
       description: rem > 0 ? `${rem} kg` : 'Habis (0 kg)',
     };
   }
@@ -229,47 +240,57 @@ export function calculateRawMaterialsRemaining(
  * Cooking / processing conversion ratios:
  * 1 Goreng Ayam PB -> 0.5 kg ayam mentah -> auto input 5 Goreng Ayam PB (pcs)
  * 1 Goreng Ayam PK -> 0.5 kg ayam mentah -> auto input 4 Goreng Ayam PK (pcs)
+ * (1 kg ayam mentah = 5 PB + 4 PK)
  * 1 kg Beras (masak nasi) -> auto input 12 pcs Nasi
  */
 export const AYAM_PB_KG_WEIGHT = 0.5; // 0.5 kg ayam mentah per 1 olahan PB
 export const AYAM_PK_KG_WEIGHT = 0.5; // 0.5 kg ayam mentah per 1 olahan PK
-export const GORENG_AYAM_PB_RATIO = 5; // 5 pcs PB per 0.5 kg
+export const GORENG_AYAM_PB_RATIO = 5; // 5 pcs PB per 0.5 kg (1 kg ayam mentah = 5 PB + 4 PK)
 export const GORENG_AYAM_PK_RATIO = 4; // 4 pcs PK per 0.5 kg
 export const MASAK_NASI_RATIO = 12;
 
-export function calculateChickenPbCook(count: number): { pcs: number; kg: number } {
+export function calculateChickenPbCook(count: number, config?: Partial<ChickenConversionConfig>): { pcs: number; kg: number } {
   const safeCount = Math.max(0, isNaN(count) ? 0 : count);
+  const pbRatio = config?.pb_ratio ?? GORENG_AYAM_PB_RATIO;
+  const pbWeight = config?.pb_kg_weight ?? AYAM_PB_KG_WEIGHT;
   return {
-    pcs: safeCount * GORENG_AYAM_PB_RATIO,
-    kg: Math.round(safeCount * AYAM_PB_KG_WEIGHT * 100) / 100,
+    pcs: safeCount * pbRatio,
+    kg: Math.round(safeCount * pbWeight * 100) / 100,
   };
 }
 
-export function calculateChickenPkCook(count: number): { pcs: number; kg: number } {
+export function calculateChickenPkCook(count: number, config?: Partial<ChickenConversionConfig>): { pcs: number; kg: number } {
   const safeCount = Math.max(0, isNaN(count) ? 0 : count);
+  const pkRatio = config?.pk_ratio ?? GORENG_AYAM_PK_RATIO;
+  const pkWeight = config?.pk_kg_weight ?? AYAM_PK_KG_WEIGHT;
   return {
-    pcs: safeCount * GORENG_AYAM_PK_RATIO,
-    kg: Math.round(safeCount * AYAM_PK_KG_WEIGHT * 100) / 100,
+    pcs: safeCount * pkRatio,
+    kg: Math.round(safeCount * pkWeight * 100) / 100,
   };
 }
 
-export function calculateChickenTotalCookKg(pbCount: number, pkCount: number): number {
-  const pbKg = (Math.max(0, isNaN(pbCount) ? 0 : pbCount)) * AYAM_PB_KG_WEIGHT;
-  const pkKg = (Math.max(0, isNaN(pkCount) ? 0 : pkCount)) * AYAM_PK_KG_WEIGHT;
+export function calculateChickenTotalCookKg(pbCount: number, pkCount: number, config?: Partial<ChickenConversionConfig>): number {
+  const pbWeight = config?.pb_kg_weight ?? AYAM_PB_KG_WEIGHT;
+  const pkWeight = config?.pk_kg_weight ?? AYAM_PK_KG_WEIGHT;
+  const pbKg = (Math.max(0, isNaN(pbCount) ? 0 : pbCount)) * pbWeight;
+  const pkKg = (Math.max(0, isNaN(pkCount) ? 0 : pkCount)) * pkWeight;
   return Math.round((pbKg + pkKg) * 100) / 100;
 }
 
-export function calculateChickenBatch(ayamCount: number): { pb: number; pk: number } {
+export function calculateChickenBatch(ayamCount: number, config?: Partial<ChickenConversionConfig>): { pb: number; pk: number } {
   const safeCount = Math.max(0, isNaN(ayamCount) ? 0 : ayamCount);
+  const pbRatio = config?.pb_ratio ?? GORENG_AYAM_PB_RATIO;
+  const pkRatio = config?.pk_ratio ?? GORENG_AYAM_PK_RATIO;
   return {
-    pb: safeCount * GORENG_AYAM_PB_RATIO,
-    pk: safeCount * GORENG_AYAM_PK_RATIO,
+    pb: safeCount * pbRatio,
+    pk: safeCount * pkRatio,
   };
 }
 
-export function calculateRiceBatch(kg: number): number {
+export function calculateRiceBatch(kg: number, config?: Partial<ChickenConversionConfig>): number {
   const safeKg = Math.max(0, isNaN(kg) ? 0 : kg);
-  return Math.round(safeKg * MASAK_NASI_RATIO);
+  const ratio = config?.masak_nasi_ratio ?? MASAK_NASI_RATIO;
+  return Math.round(safeKg * ratio);
 }
 
 /**
@@ -381,6 +402,16 @@ export function getProductRequirements(item: {
     }
     if (reqs.length > 0) return reqs;
   }
+
+  // 1b. Check barang_id relation if present
+  const barangId = (item as any).barang_id;
+  if (barangId === 1) return [{ stockKey: 'goreng_ayam_pb', label: 'Ayam PB', shortLabel: 'PB', unit: 'pcs', qtyPerPackage: 1 }];
+  if (barangId === 2) return [{ stockKey: 'goreng_ayam_pk', label: 'Ayam PK', shortLabel: 'PK', unit: 'pcs', qtyPerPackage: 1 }];
+  if (barangId === 4) return [{ stockKey: 'goreng_kulit', label: 'Kulit', shortLabel: 'Kulit', unit: 'pcs', qtyPerPackage: 1 }];
+  if (barangId === 5) return [{ stockKey: 'goreng_kulit_ck', label: 'Kulit CK', shortLabel: 'Kulit CK', unit: 'pcs', qtyPerPackage: 1 }];
+  if (barangId === 7) return [{ stockKey: 'nasi', label: 'Nasi', shortLabel: 'Nasi', unit: 'porsi', qtyPerPackage: 1 }];
+  if (barangId === 9) return [{ stockKey: 's_chili_oil', label: 'Chili Oil', shortLabel: 'Chili Oil', unit: 'cup', qtyPerPackage: 1 }];
+  if (barangId === 10) return [{ stockKey: 's_geprek', label: 'Geprek', shortLabel: 'Geprek', unit: 'cup', qtyPerPackage: 1 }];
 
   // 2. Traditional single items
   if (id === 1 || name === 'ayam pb') {
@@ -534,8 +565,8 @@ export function getProductStockSummary(
     return {
       isPackage: false,
       components: [],
-      hasAnyStockFilled: false,
-      hasAllStockFilled: false,
+      hasAnyStockFilled: true,
+      hasAllStockFilled: true,
       maxFromInitialStock: null,
       maxAllowedQuantity: 999999,
       additionalAvailable: 999999,
@@ -801,7 +832,8 @@ export function calculateAllRemainingStock(
 export function generateRemainingStockFromSales(
   stock: StockData,
   sales: SaleItem[],
-  currentRemainingStock: StockData
+  currentRemainingStock: StockData,
+  config?: Partial<ChickenConversionConfig>
 ): StockData {
   const diffs = calculateAllRemainingStock(stock, sales);
   const updated: StockData = { ...currentRemainingStock };
@@ -815,7 +847,7 @@ export function generateRemainingStockFromSales(
   }
 
   // 2. Bahan Baku Dapur:
-  // Ayam Mentah = Stok Awal Ayam Mentah - (Goreng PB * 0.5 kg + Goreng PK * 0.5 kg)
+  // Ayam Mentah = Stok Awal Ayam Mentah - (Goreng PB + Goreng PK)
   const ayamInitial = parseStockQuantity(stock.ayam_mentah);
   const pbOlahan = parseStockQuantity(stock.masak_ayam_pb);
   const pkOlahan = parseStockQuantity(stock.masak_ayam_pk);
@@ -823,13 +855,13 @@ export function generateRemainingStockFromSales(
 
   let totalAyamGoreng = 0;
   if (pbOlahan !== null || pkOlahan !== null) {
-    totalAyamGoreng = calculateChickenTotalCookKg(pbOlahan || 0, pkOlahan || 0);
+    totalAyamGoreng = calculateChickenTotalCookKg(pbOlahan || 0, pkOlahan || 0, config);
   } else {
     totalAyamGoreng = ayamGorengLegacy;
   }
 
   if (ayamInitial !== null) {
-    const chickenDetail = calculateChickenRemainingDetail(ayamInitial, pbOlahan || 0, pkOlahan || 0);
+    const chickenDetail = calculateChickenRemainingDetail(ayamInitial, pbOlahan || 0, pkOlahan || 0, config);
     updated.ayam_mentah = chickenDetail.totalRemainingKg.toString();
     if (chickenDetail.description) {
       updated.ayam_mentah_keterangan = chickenDetail.description;

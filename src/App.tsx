@@ -16,8 +16,16 @@ import {
 } from 'lucide-react';
 import {
   AppTab,
+  ChickenConversionConfig,
   DailyReport,
+  DEFAULT_CHICKEN_CONVERSION,
+  DEFAULT_ENDING_STOCK_ITEMS,
+  DEFAULT_EXPENSE_CATEGORIES,
   DEFAULT_PRODUCTS,
+  DEFAULT_STOCK_ITEMS,
+  DEFAULT_TOSSER_ITEMS,
+  EndingStockMasterItem,
+  ExpenseCategoryItem,
   ExpenseData,
   OutletItem,
   OUTLETS,
@@ -26,6 +34,8 @@ import {
   ReportFormData,
   SaleItem,
   StockData,
+  StockMasterItem,
+  TosserMasterItem,
 } from './types.ts';
 import { Header } from './components/Header.tsx';
 import { StockSection } from './components/StockSection.tsx';
@@ -138,6 +148,18 @@ export default function App() {
     }
   });
 
+  const [chickenConversion, setChickenConversion] = useState<ChickenConversionConfig>(() => {
+    try {
+      const saved = localStorage.getItem('hd_chicken_conversion');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_CHICKEN_CONVERSION;
+  });
+
   const [outlets, setOutlets] = useState<OutletItem[]>(() =>
     OUTLETS.map((name, i) => ({
       id: i + 1,
@@ -147,6 +169,9 @@ export default function App() {
     }))
   );
   const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
+  const [stockItems, setStockItems] = useState<StockMasterItem[]>(DEFAULT_STOCK_ITEMS);
+  const [tosserItems, setTosserItems] = useState<TosserMasterItem[]>(DEFAULT_TOSSER_ITEMS);
+  const [endingStockItems, setEndingStockItems] = useState<EndingStockMasterItem[]>(DEFAULT_ENDING_STOCK_ITEMS);
 
   // Form State
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -161,6 +186,7 @@ export default function App() {
   const [stock, setStock] = useState<StockData>(INITIAL_STOCK);
   const [remainingStock, setRemainingStock] = useState<StockData>(INITIAL_STOCK);
   const [sales, setSales] = useState<SaleItem[]>(() => getInitialSales('traditional'));
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategoryItem[]>(DEFAULT_EXPENSE_CATEGORIES);
   const [expenses, setExpenses] = useState<ExpenseData>(INITIAL_EXPENSES);
   const [promo, setPromo] = useState<number>(0);
   const [promoNote, setPromoNote] = useState<string>('');
@@ -283,7 +309,7 @@ export default function App() {
       const pkCook = parseStockQuantity(stock.masak_ayam_pk) || 0;
 
       if (ayamInitial !== null) {
-        const chickenDetail = calculateChickenRemainingDetail(ayamInitial, pbCook, pkCook);
+        const chickenDetail = calculateChickenRemainingDetail(ayamInitial, pbCook, pkCook, chickenConversion);
         const calcAyamRem = chickenDetail.totalRemainingKg.toString();
         if (nextRem.ayam_mentah !== calcAyamRem) {
           nextRem.ayam_mentah = calcAyamRem;
@@ -322,17 +348,11 @@ export default function App() {
 
   // Calculations
   const totalIncome = sales.reduce((acc, item) => acc + (Number(item.subtotal) || 0), 0);
-  const totalExpense =
-    (Number(expenses.gas) || 0) +
-    (Number(expenses.galon) || 0) +
-    (Number(expenses.clean_tools) || 0) +
-    (Number(expenses.kulit) || 0) +
-    (Number(expenses.meal) || 0) +
-    (Number(expenses.bonus) || 0) +
-    (Number(expenses.lain_lain) || 0) +
-    (Number(expenses.beras) || 0) +
-    (Number(expenses.saus) || 0) +
-    (Number(expenses.minyak) || 0);
+  const totalExpense = Object.entries(expenses).reduce((acc, [key, val]) => {
+    if (key === 'total_expense' || key === 'lain_lain_keterangan') return acc;
+    const num = Number(val);
+    return isNaN(num) ? acc : acc + Math.max(0, num);
+  }, 0);
 
   // Formula: Total Akhir = Total Pemasukan - (Total Pengeluaran + Promo)
   const finalTotal = totalIncome - (totalExpense + (Number(promo) || 0));
@@ -383,6 +403,14 @@ export default function App() {
             // ignore
           }
         }
+        if (settings?.conversion) {
+          setChickenConversion(settings.conversion);
+          try {
+            localStorage.setItem('hd_chicken_conversion', JSON.stringify(settings.conversion));
+          } catch {
+            // ignore
+          }
+        }
       })
       .catch(() => { });
 
@@ -402,6 +430,46 @@ export default function App() {
       .then((prods: Product[]) => {
         if (Array.isArray(prods) && prods.length > 0) {
           setProducts(prods);
+        }
+      })
+      .catch(() => { });
+
+    // Fetch master expense categories
+    fetch('/api/master/expense-categories')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((cats: ExpenseCategoryItem[]) => {
+        if (Array.isArray(cats) && cats.length > 0) {
+          setExpenseCategories(cats);
+        }
+      })
+      .catch(() => { });
+
+    // Fetch master stock items
+    fetch('/api/master/stock-items')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((items: StockMasterItem[]) => {
+        if (Array.isArray(items) && items.length > 0) {
+          setStockItems(items);
+        }
+      })
+      .catch(() => { });
+
+    // Fetch master tosser items
+    fetch('/api/master/tosser-items')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((items: TosserMasterItem[]) => {
+        if (Array.isArray(items) && items.length > 0) {
+          setTosserItems(items);
+        }
+      })
+      .catch(() => { });
+
+    // Fetch master ending stock items
+    fetch('/api/master/ending-stock-items')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((items: EndingStockMasterItem[]) => {
+        if (Array.isArray(items) && items.length > 0) {
+          setEndingStockItems(items);
         }
       })
       .catch(() => { });
@@ -740,6 +808,9 @@ export default function App() {
             <StockSection
               stock={stock}
               setStock={setStock}
+              conversion={chickenConversion}
+              stockItems={stockItems}
+              tosserItems={tosserItems}
             />
 
             {/* SECTION 2: PEMASUKAN OFFLINE */}
@@ -757,8 +828,11 @@ export default function App() {
               setRemainingStock={setRemainingStock}
               stock={stock}
               sales={sales}
+              conversion={chickenConversion}
+              stockItems={stockItems}
+              endingStockItems={endingStockItems}
               onResetToCalculated={() => {
-                setRemainingStock((prev) => generateRemainingStockFromSales(stock, sales, prev));
+                setRemainingStock((prev) => generateRemainingStockFromSales(stock, sales, prev, chickenConversion));
                 showToast('Sisa stock berhasil dihitung ulang dari Stok Awal − Penjualan Offline', 'success');
               }}
             />
@@ -769,6 +843,7 @@ export default function App() {
               setExpenses={setExpenses}
               totalExpense={totalExpense}
               totalIncome={totalIncome}
+              categories={expenseCategories}
             />
 
             {/* SECTION 5 & 6: PROMO & RINGKASAN */}
@@ -894,6 +969,16 @@ export default function App() {
             setProducts={setProducts}
             showToast={showToast}
             onLockAdmin={handleLockAdmin}
+            conversion={chickenConversion}
+            onConversionChange={setChickenConversion}
+            expenseCategories={expenseCategories}
+            onExpenseCategoriesChange={setExpenseCategories}
+            stockItems={stockItems}
+            setStockItems={setStockItems}
+            tosserItems={tosserItems}
+            setTosserItems={setTosserItems}
+            endingStockItems={endingStockItems}
+            setEndingStockItems={setEndingStockItems}
           />
         ) : (
           /* RIWAYAT LAPORAN VIEW */
@@ -975,6 +1060,7 @@ export default function App() {
         onClose={() => setSelectedReport(null)}
         onEdit={handleEditReport}
         onDelete={handleDeleteReport}
+        conversion={chickenConversion}
       />
 
       {/* ADMIN PIN VERIFICATION MODAL */}

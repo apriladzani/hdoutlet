@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Calendar,
   Store,
   ChevronRight,
+  ChevronDown,
   CheckCircle2,
   AlertTriangle,
   Search,
@@ -17,6 +18,8 @@ import {
   Receipt,
   PieChart,
   Lock,
+  Check,
+  X,
 } from 'lucide-react';
 import { DailyReport, OUTLETS } from '../types.ts';
 import { formatRupiah, formatIndonesianDate } from '../utils/formatters.ts';
@@ -47,17 +50,49 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
   availableOutlets,
 }) => {
   const [filterType, setFilterType] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
-  const [outletFilter, setOutletFilter] = useState<string>('Semua');
+  const [selectedOutlets, setSelectedOutlets] = useState<string[]>([]);
+  const [isOutletDropdownOpen, setIsOutletDropdownOpen] = useState<boolean>(false);
+  const [outletSearch, setOutletSearch] = useState<string>('');
+  const outletDropdownRef = useRef<HTMLDivElement>(null);
+
   const [customStartDate, setCustomStartDate] = useState<string>('');
   const [customEndDate, setCustomEndDate] = useState<string>('');
   const activeOutletsList = availableOutlets && availableOutlets.length > 0 ? availableOutlets : OUTLETS;
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (outletDropdownRef.current && !outletDropdownRef.current.contains(event.target as Node)) {
+        setIsOutletDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleOutlet = (outletName: string) => {
+    setSelectedOutlets((prev) =>
+      prev.includes(outletName) ? prev.filter((o) => o !== outletName) : [...prev, outletName]
+    );
+  };
+
+  const selectAllOutlets = () => {
+    setSelectedOutlets([...activeOutletsList]);
+  };
+
+  const clearOutletSelection = () => {
+    setSelectedOutlets([]);
+  };
+
   // Filtered reports
   const filteredReports = reports.filter((r) => {
-    // Outlet match
-    if (outletFilter !== 'Semua' && r.outlet_name.toLowerCase() !== outletFilter.toLowerCase()) {
-      return false;
+    // Outlet match (multi-select: if empty, show all; if selected, r.outlet_name must match one)
+    if (selectedOutlets.length > 0) {
+      const matchOutlet = selectedOutlets.some(
+        (out) => out.toLowerCase() === r.outlet_name.toLowerCase()
+      );
+      if (!matchOutlet) return false;
     }
 
     // Search query match
@@ -85,8 +120,13 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
       return r.report_date.startsWith(currentMonth);
     }
     if (filterType === 'custom') {
-      if (customStartDate && r.report_date < customStartDate) return false;
-      if (customEndDate && r.report_date > customEndDate) return false;
+      if (customStartDate && customEndDate) {
+        if (r.report_date < customStartDate || r.report_date > customEndDate) return false;
+      } else if (customStartDate && !customEndDate) {
+        if (r.report_date !== customStartDate) return false;
+      } else if (!customStartDate && customEndDate) {
+        if (r.report_date > customEndDate) return false;
+      }
     }
 
     return true;
@@ -147,14 +187,32 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
         timeText = 'Bulan Ini';
       }
     } else if (filterType === 'custom') {
-      timeText = customStartDate && customEndDate
-        ? `${customStartDate} s/d ${customEndDate}`
-        : 'Rentang Kustom';
+      if (customStartDate && customEndDate) {
+        timeText =
+          customStartDate === customEndDate
+            ? formatIndonesianDate(customStartDate)
+            : `${formatIndonesianDate(customStartDate)} s/d ${formatIndonesianDate(customEndDate)}`;
+      } else if (customStartDate) {
+        timeText = `Tanggal: ${formatIndonesianDate(customStartDate)}`;
+      } else if (customEndDate) {
+        timeText = `Sampai: ${formatIndonesianDate(customEndDate)}`;
+      } else {
+        timeText = 'Rentang Kustom';
+      }
     }
 
-    const outletText = outletFilter === 'Semua' ? 'Semua Outlet' : `Outlet ${outletFilter}`;
+    let outletText = 'Semua Outlet';
+    if (selectedOutlets.length === 1) {
+      outletText = `Outlet ${selectedOutlets[0]}`;
+    } else if (selectedOutlets.length > 1) {
+      if (selectedOutlets.length === activeOutletsList.length) {
+        outletText = `Semua Outlet (${selectedOutlets.length})`;
+      } else {
+        outletText = `${selectedOutlets.length} Outlet (${selectedOutlets.join(', ')})`;
+      }
+    }
     return { timeText, outletText };
-  }, [filterType, outletFilter, customStartDate, customEndDate]);
+  }, [filterType, selectedOutlets, activeOutletsList.length, customStartDate, customEndDate]);
 
   return (
     <div className="space-y-4 pb-12">
@@ -269,55 +327,200 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
 
         {/* Custom Date Picker Inputs */}
         {filterType === 'custom' && (
-          <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="filter-custom-start" className="block text-[10px] font-bold text-slate-500 mb-1">
-                Dari Tanggal
-              </label>
-              <input
-                type="date"
-                id="filter-custom-start"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none min-h-[38px]"
-              />
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="filter-custom-start" className="block text-[10px] font-bold text-slate-500 mb-1">
+                  Dari Tanggal
+                </label>
+                <input
+                  type="date"
+                  id="filter-custom-start"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none min-h-[38px]"
+                />
+              </div>
+              <div>
+                <label htmlFor="filter-custom-end" className="block text-[10px] font-bold text-slate-500 mb-1">
+                  Sampai Tanggal
+                </label>
+                <input
+                  type="date"
+                  id="filter-custom-end"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none min-h-[38px]"
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="filter-custom-end" className="block text-[10px] font-bold text-slate-500 mb-1">
-                Sampai Tanggal
-              </label>
-              <input
-                type="date"
-                id="filter-custom-end"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none min-h-[38px]"
-              />
-            </div>
+            {customStartDate && (
+              <div className="mt-1.5 flex items-center justify-between text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setCustomEndDate(customStartDate)}
+                  className="text-slate-600 hover:text-[#E4002B] font-semibold underline"
+                >
+                  Set hanya 1 hari ({formatIndonesianDate(customStartDate)})
+                </button>
+                {customEndDate && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomEndDate('')}
+                    className="text-slate-400 hover:text-slate-600"
+                  >
+                    Kosongkan batas akhir
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Secondary Filter: Outlet & Search */}
+        {/* Secondary Filter: Outlet Multi-Select & Search */}
         <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {/* Outlet Filter */}
-          <div className="relative">
-            <Store className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <select
-              id="filter-outlet-select"
-              value={outletFilter}
-              onChange={(e) => setOutletFilter(e.target.value)}
-              className="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 appearance-none focus:outline-none focus:border-[#E4002B] min-h-[40px]"
+          {/* Multi-Select Outlet Filter */}
+          <div className="relative" ref={outletDropdownRef}>
+            <button
+              type="button"
+              id="filter-outlet-multiselect-btn"
+              onClick={() => setIsOutletDropdownOpen(!isOutletDropdownOpen)}
+              className={`w-full pl-8 pr-3 py-2 text-left bg-slate-50 border rounded-xl text-xs font-semibold transition-all min-h-[40px] flex items-center justify-between gap-1.5 ${
+                selectedOutlets.length > 0
+                  ? 'border-[#E4002B]/60 bg-red-50/30 text-slate-900 ring-1 ring-[#E4002B]/20'
+                  : 'border-slate-200 text-slate-700 hover:border-slate-300'
+              }`}
             >
-              <option value="Semua">Semua Outlet</option>
-              {activeOutletsList.map((out) => (
-                <option key={out} value={out}>
-                  {out}
-                </option>
-              ))}
-            </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none">
-              ▼
-            </span>
+              <Store className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="flex-1 truncate pr-1">
+                {selectedOutlets.length === 0 ? (
+                  <span className="text-slate-600">Semua Outlet (Bisa Multi-Select)</span>
+                ) : selectedOutlets.length === 1 ? (
+                  <span className="truncate">
+                    Outlet: <span className="text-[#E4002B] font-bold">{selectedOutlets[0]}</span>
+                  </span>
+                ) : (
+                  <span className="truncate">
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.2 bg-[#E4002B] text-white text-[10px] rounded-md font-bold mr-1.5">
+                      {selectedOutlets.length}
+                    </span>
+                    <span className="text-slate-800 font-bold">{selectedOutlets.join(', ')}</span>
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                {selectedOutlets.length > 0 && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearOutletSelection();
+                    }}
+                    title="Reset Pilihan Outlet"
+                    className="p-1 hover:bg-red-100 rounded-full text-slate-400 hover:text-[#E4002B] transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </span>
+                )}
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                    isOutletDropdownOpen ? 'rotate-180 text-[#E4002B]' : ''
+                  }`}
+                />
+              </div>
+            </button>
+
+            {/* Dropdown Menu */}
+            {isOutletDropdownOpen && (
+              <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="p-2 border-b border-slate-100 bg-slate-50/80">
+                  <div className="relative">
+                    <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Cari nama outlet..."
+                      value={outletSearch}
+                      onChange={(e) => setOutletSearch(e.target.value)}
+                      className="w-full pl-7 pr-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-[#E4002B]"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-200/60 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={selectAllOutlets}
+                      className="font-bold text-[#E4002B] hover:underline"
+                    >
+                      Pilih Semua ({activeOutletsList.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearOutletSelection}
+                      className="font-medium text-slate-500 hover:text-slate-800"
+                    >
+                      Kosongkan (Semua)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Outlets Checkbox List */}
+                <div className="max-h-60 overflow-y-auto p-1 divide-y divide-slate-50">
+                  {activeOutletsList
+                    .filter((out) => out.toLowerCase().includes(outletSearch.toLowerCase()))
+                    .map((out) => {
+                      const isSelected = selectedOutlets.includes(out);
+                      const countForOutlet = reports.filter(
+                        (r) => r.outlet_name.toLowerCase() === out.toLowerCase()
+                      ).length;
+
+                      return (
+                        <label
+                          key={out}
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors text-xs ${
+                            isSelected
+                              ? 'bg-red-50/80 font-bold text-slate-900'
+                              : 'hover:bg-slate-50 text-slate-700 font-medium'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleOutlet(out)}
+                              className="w-4 h-4 rounded text-[#E4002B] focus:ring-[#E4002B] border-slate-300 accent-[#E4002B]"
+                            />
+                            <span>{out}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            {countForOutlet} lap
+                          </span>
+                        </label>
+                      );
+                    })}
+                  {activeOutletsList.filter((out) => out.toLowerCase().includes(outletSearch.toLowerCase())).length === 0 && (
+                    <div className="p-4 text-center text-xs text-slate-400">
+                      Tidak ada outlet yang cocok
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-2 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs">
+                  <span className="text-[11px] text-slate-500">
+                    {selectedOutlets.length === 0
+                      ? 'Semua outlet aktif'
+                      : `${selectedOutlets.length} dari ${activeOutletsList.length} outlet`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsOutletDropdownOpen(false)}
+                    className="px-3 py-1 bg-slate-900 text-white rounded-lg font-bold text-[11px] hover:bg-slate-800"
+                  >
+                    Terapkan
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Search Input */}
@@ -328,11 +531,41 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
               id="filter-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari tanggal, catatan..."
+              placeholder="Cari staff, catatan..."
               className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-[#E4002B] min-h-[40px]"
             />
           </div>
         </div>
+
+        {/* Selected Outlets Chips Bar */}
+        {selectedOutlets.length > 0 && (
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-bold text-slate-500 mr-1">Outlet Terpilih ({selectedOutlets.length}):</span>
+            {selectedOutlets.map((out) => (
+              <span
+                key={out}
+                className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full text-xs font-bold bg-[#E4002B]/10 text-[#E4002B] border border-[#E4002B]/20"
+              >
+                <span>{out}</span>
+                <button
+                  type="button"
+                  onClick={() => toggleOutlet(out)}
+                  className="hover:bg-[#E4002B]/20 p-0.5 rounded-full text-[#E4002B] transition-colors"
+                  title={`Hapus filter ${out}`}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={clearOutletSelection}
+              className="text-[11px] text-slate-400 hover:text-[#E4002B] underline font-semibold ml-1 cursor-pointer"
+            >
+              Reset semua outlet
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Rekapitulasi Total Hasil Filter (Total Pemasukan, Total Pengeluaran, Total Bersih, Total Loss) */}
@@ -372,13 +605,13 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
             </div>
           </div>
 
-          {(outletFilter !== 'Semua' || filterType !== 'all' || searchQuery || customStartDate || customEndDate) && (
+          {(selectedOutlets.length > 0 || filterType !== 'all' || searchQuery || customStartDate || customEndDate) && (
             <button
               type="button"
               id="btn-reset-filter"
               onClick={() => {
                 setFilterType('all');
-                setOutletFilter('Semua');
+                setSelectedOutlets([]);
                 setSearchQuery('');
                 setCustomStartDate('');
                 setCustomEndDate('');

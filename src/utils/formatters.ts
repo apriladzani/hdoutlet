@@ -4,6 +4,8 @@ import {
   calculateLossPercentage,
   calculateExpensePercentage,
   formatPercentage,
+  GORENG_AYAM_PB_RATIO,
+  GORENG_AYAM_PK_RATIO,
 } from './stockCalculations.ts';
 
 export function formatRupiah(amount: number | string | undefined | null): string {
@@ -71,7 +73,7 @@ export function generateWaSummary(report: DailyReport): string {
     `📦 *STOCK AWAL & TOSSER:*`,
     `• Ayam Mentah: ${report.stock?.ayam_mentah || '0'} kg | Goreng PB: ${report.stock?.masak_ayam_pb || (report.stock?.goreng_ayam_pb ? report.stock.goreng_ayam_pb + ' pcs' : '0')} | Goreng PK: ${report.stock?.masak_ayam_pk || (report.stock?.goreng_ayam_pk ? report.stock.goreng_ayam_pk + ' pcs' : '0')}`,
     `• Beras: ${report.stock?.beras || '0'} kg | Masak Nasi: ${report.stock?.masak_nasi || '0'} kg | Masak Kulit CK: ${report.stock?.masak_kulit_ck ? report.stock.masak_kulit_ck + ' pcs' : '0'}`,
-    `• Siap Jual: PB: ${report.stock?.goreng_ayam_pb || (Number(report.stock?.masak_ayam_pb || 0) * 5) || 0} | PK: ${report.stock?.goreng_ayam_pk || (Number(report.stock?.masak_ayam_pk || 0) * 4) || 0} | Kulit: ${report.stock?.goreng_kulit || 0} | Kulit CK: ${report.stock?.goreng_kulit_ck || 0} | Nasi: ${report.stock?.nasi || 0}`,
+    `• Siap Jual: PB: ${report.stock?.goreng_ayam_pb || (Number(report.stock?.masak_ayam_pb || 0) * GORENG_AYAM_PB_RATIO) || 0} | PK: ${report.stock?.goreng_ayam_pk || (Number(report.stock?.masak_ayam_pk || 0) * GORENG_AYAM_PK_RATIO) || 0} | Kulit: ${report.stock?.goreng_kulit || 0} | Kulit CK: ${report.stock?.goreng_kulit_ck || 0} | Nasi: ${report.stock?.nasi || 0}`,
   ];
 
   const inData = report.stock?.tosser_in;

@@ -3,11 +3,15 @@ import fs from 'fs';
 import path from 'path';
 import {
   AdminSettings,
+  ChickenConversionConfig,
   DailyReport,
+  DEFAULT_CHICKEN_CONVERSION,
+  DEFAULT_MASTER_BARANG,
   DEFAULT_PRODUCTS,
   EndingStockMasterItem,
   ExpenseCategoryItem,
   ExpenseData,
+  MasterBarangItem,
   OutletItem,
   OUTLETS,
   PaymentData,
@@ -32,32 +36,33 @@ const DEFAULT_TOSSER: TosserData = {
 
 export const DEFAULT_SETTINGS: AdminSettings = {
   admin_pin: '0825',
+  conversion: DEFAULT_CHICKEN_CONVERSION,
 };
 
 export const DEFAULT_STOCK_ITEMS: StockMasterItem[] = [
-  { id: 1, key: 'ayam_mentah', name: 'Ayam Mentah', category: 'raw', unit: 'kg', active: true },
-  { id: 2, key: 'masak_ayam_pb', name: 'Masak Goreng Ayam PB', category: 'raw', unit: 'ekor/porsi', active: true },
-  { id: 3, key: 'masak_ayam_pk', name: 'Masak Goreng Ayam PK', category: 'raw', unit: 'ekor/porsi', active: true },
-  { id: 4, key: 'kulit_mentah', name: 'Kulit Mentah', category: 'raw', unit: 'kg', active: true },
-  { id: 5, key: 'beras', name: 'Beras', category: 'raw', unit: 'kg', active: true },
-  { id: 6, key: 'masak_nasi', name: 'Masak Nasi', category: 'raw', unit: 'kg', active: true },
-  { id: 7, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', category: 'ready', unit: 'pcs', active: true },
-  { id: 8, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', category: 'ready', unit: 'pcs', active: true },
-  { id: 9, key: 'goreng_kulit', name: 'Goreng Kulit', category: 'ready', unit: 'pcs', active: true },
-  { id: 13, key: 'goreng_kulit_ck', name: 'Kulit CK', category: 'ready', unit: 'pcs', active: true },
-  { id: 10, key: 'nasi', name: 'Nasi', category: 'ready', unit: 'pcs', active: true },
-  { id: 11, key: 's_chili_oil', name: 'S. Chili Oil', category: 'ready', unit: 'pcs', active: true },
-  { id: 12, key: 's_geprek', name: 'S. Geprek', category: 'ready', unit: 'pcs', active: true },
+  { id: 1, key: 'ayam_mentah', name: 'Ayam Mentah', category: 'raw', unit: 'kg', active: true, barang_id: 3 },
+  { id: 2, key: 'masak_ayam_pb', name: 'Masak Goreng Ayam PB', category: 'raw', unit: 'ekor/porsi', active: true, barang_id: 1 },
+  { id: 3, key: 'masak_ayam_pk', name: 'Masak Goreng Ayam PK', category: 'raw', unit: 'ekor/porsi', active: true, barang_id: 2 },
+  { id: 4, key: 'kulit_mentah', name: 'Kulit Mentah', category: 'raw', unit: 'kg', active: true, barang_id: 6 },
+  { id: 5, key: 'beras', name: 'Beras', category: 'raw', unit: 'kg', active: true, barang_id: 8 },
+  { id: 6, key: 'masak_nasi', name: 'Masak Nasi', category: 'raw', unit: 'kg', active: true, barang_id: 7 },
+  { id: 7, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', category: 'ready', unit: 'pcs', active: true, barang_id: 1 },
+  { id: 8, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', category: 'ready', unit: 'pcs', active: true, barang_id: 2 },
+  { id: 9, key: 'goreng_kulit', name: 'Goreng Kulit', category: 'ready', unit: 'pcs', active: true, barang_id: 4 },
+  { id: 13, key: 'goreng_kulit_ck', name: 'Kulit CK', category: 'ready', unit: 'pcs', active: true, barang_id: 5 },
+  { id: 10, key: 'nasi', name: 'Nasi', category: 'ready', unit: 'pcs', active: true, barang_id: 7 },
+  { id: 11, key: 's_chili_oil', name: 'S. Chili Oil', category: 'ready', unit: 'pcs', active: true, barang_id: 9 },
+  { id: 12, key: 's_geprek', name: 'S. Geprek', category: 'ready', unit: 'pcs', active: true, barang_id: 10 },
 ];
 
 export const DEFAULT_TOSSER_ITEMS: TosserMasterItem[] = [
-  { id: 1, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', type: 'both', unit: 'pcs', active: true },
-  { id: 2, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', type: 'both', unit: 'pcs', active: true },
-  { id: 3, key: 'goreng_kulit', name: 'Goreng Kulit', type: 'both', unit: 'pcs', active: true },
-  { id: 7, key: 'goreng_kulit_ck', name: 'Kulit CK', type: 'both', unit: 'pcs', active: true },
-  { id: 4, key: 'nasi', name: 'Nasi', type: 'both', unit: 'pcs', active: true },
-  { id: 5, key: 's_chili_oil', name: 'S. Chili Oil', type: 'both', unit: 'pcs', active: true },
-  { id: 6, key: 's_geprek', name: 'S. Geprek', type: 'both', unit: 'pcs', active: true },
+  { id: 1, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', type: 'both', unit: 'pcs', active: true, barang_id: 1 },
+  { id: 2, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', type: 'both', unit: 'pcs', active: true, barang_id: 2 },
+  { id: 3, key: 'goreng_kulit', name: 'Goreng Kulit', type: 'both', unit: 'pcs', active: true, barang_id: 4 },
+  { id: 7, key: 'goreng_kulit_ck', name: 'Kulit CK', type: 'both', unit: 'pcs', active: true, barang_id: 5 },
+  { id: 4, key: 'nasi', name: 'Nasi', type: 'both', unit: 'pcs', active: true, barang_id: 7 },
+  { id: 5, key: 's_chili_oil', name: 'S. Chili Oil', type: 'both', unit: 'pcs', active: true, barang_id: 9 },
+  { id: 6, key: 's_geprek', name: 'S. Geprek', type: 'both', unit: 'pcs', active: true, barang_id: 10 },
 ];
 
 export const DEFAULT_EXPENSE_CATEGORIES: ExpenseCategoryItem[] = [
@@ -102,17 +107,11 @@ export function calculateTotals(
     return acc + qty * price;
   }, 0);
 
-  const gas = Math.max(0, Number(safeExpenses.gas) || 0);
-  const galon = Math.max(0, Number(safeExpenses.galon) || 0);
-  const clean_tools = Math.max(0, Number(safeExpenses.clean_tools) || 0);
-  const kulit = Math.max(0, Number(safeExpenses.kulit) || 0);
-  const meal = Math.max(0, Number(safeExpenses.meal) || 0);
-  const bonus = Math.max(0, Number(safeExpenses.bonus) || 0);
-  const lain_lain = Math.max(0, Number(safeExpenses.lain_lain) || 0);
-  const beras = Math.max(0, Number(safeExpenses.beras) || 0);
-  const saus = Math.max(0, Number(safeExpenses.saus) || 0);
-  const minyak = Math.max(0, Number(safeExpenses.minyak) || 0);
-  const total_expense = gas + galon + clean_tools + kulit + meal + bonus + lain_lain + beras + saus + minyak;
+  const total_expense = Object.entries(safeExpenses).reduce((acc, [k, v]) => {
+    if (k === 'total_expense' || k === 'lain_lain_keterangan') return acc;
+    const num = Number(v);
+    return isNaN(num) ? acc : acc + Math.max(0, num);
+  }, 0);
 
   const validPromo = Math.max(0, Number(promo) || 0);
   const final_total = total_income - (total_expense + validPromo);
@@ -208,7 +207,7 @@ export async function initDatabase(): Promise<void> {
 
   try {
     await p.query(`ALTER TABLE \`outlets\` ADD COLUMN \`outlet_type\` VARCHAR(20) NOT NULL DEFAULT 'traditional'`);
-  } catch {}
+  } catch { }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS \`products\` (
@@ -230,13 +229,16 @@ export async function initDatabase(): Promise<void> {
 
   try {
     await p.query(`ALTER TABLE \`products\` ADD COLUMN \`outlet_type\` VARCHAR(20) NOT NULL DEFAULT 'all'`);
-  } catch {}
+  } catch { }
   try {
     await p.query(`ALTER TABLE \`products\` ADD COLUMN \`description\` VARCHAR(255) NULL`);
-  } catch {}
+  } catch { }
   try {
     await p.query(`ALTER TABLE \`products\` ADD COLUMN \`items_composition\` JSON NULL`);
-  } catch {}
+  } catch { }
+  try {
+    await p.query(`ALTER TABLE \`products\` ADD COLUMN \`barang_id\` INT UNSIGNED NULL`);
+  } catch { }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS \`reports\` (
@@ -295,10 +297,10 @@ export async function initDatabase(): Promise<void> {
 
   try {
     await p.query(`ALTER TABLE \`stocks\` ADD COLUMN \`masak_kulit_ck\` VARCHAR(50) NULL DEFAULT ''`);
-  } catch {}
+  } catch { }
   try {
     await p.query(`ALTER TABLE \`stocks\` ADD COLUMN \`goreng_kulit_ck\` VARCHAR(50) NULL DEFAULT ''`);
-  } catch {}
+  } catch { }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS \`remaining_stocks\` (
@@ -329,7 +331,7 @@ export async function initDatabase(): Promise<void> {
 
   try {
     await p.query(`ALTER TABLE \`remaining_stocks\` ADD COLUMN \`goreng_kulit_ck\` VARCHAR(50) NULL DEFAULT ''`);
-  } catch {}
+  } catch { }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS \`sales\` (
@@ -352,7 +354,7 @@ export async function initDatabase(): Promise<void> {
 
   try {
     await p.query(`ALTER TABLE \`sales\` ADD COLUMN \`items_composition\` JSON NULL`);
-  } catch {}
+  } catch { }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS \`expenses\` (
@@ -370,6 +372,7 @@ export async function initDatabase(): Promise<void> {
       \`lain_lain\` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
       \`lain_lain_keterangan\` TEXT NULL,
       \`total_expense\` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+      \`custom_expenses\` JSON NULL,
       \`created_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       \`updated_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (\`expense_id\`),
@@ -377,6 +380,12 @@ export async function initDatabase(): Promise<void> {
       CONSTRAINT \`fk_expenses_report\` FOREIGN KEY (\`report_id\`) REFERENCES \`reports\` (\`report_id\`) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  try {
+    await p.query('ALTER TABLE `expenses` ADD COLUMN `custom_expenses` JSON NULL');
+  } catch {
+    // Column already exists
+  }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS \`payments\` (
@@ -400,6 +409,7 @@ export async function initDatabase(): Promise<void> {
 
 async function ensureDefaultMasterConfigs(p: Pool): Promise<void> {
   const configs = [
+    { key: 'master_barang', val: DEFAULT_MASTER_BARANG },
     { key: 'stock_items', val: DEFAULT_STOCK_ITEMS },
     { key: 'tosser_items', val: DEFAULT_TOSSER_ITEMS },
     { key: 'expense_categories', val: DEFAULT_EXPENSE_CATEGORIES },
@@ -417,11 +427,20 @@ export const mySqlService = {
   // --- Settings ---
   async getSettings(): Promise<AdminSettings> {
     const p = getPool();
-    const [rows] = await p.query<RowDataPacket[]>('SELECT admin_pin FROM `settings` ORDER BY setting_id DESC LIMIT 1');
-    if (rows.length > 0 && rows[0].admin_pin) {
-      return { admin_pin: rows[0].admin_pin };
+    let admin_pin = DEFAULT_SETTINGS.admin_pin;
+    try {
+      const [rows] = await p.query<RowDataPacket[]>('SELECT admin_pin FROM `settings` ORDER BY setting_id DESC LIMIT 1');
+      if (rows.length > 0 && rows[0].admin_pin) {
+        admin_pin = rows[0].admin_pin;
+      }
+    } catch {
+      // fallback
     }
-    return DEFAULT_SETTINGS;
+    const conversion = await this.getConversionConfig();
+    return {
+      admin_pin,
+      conversion,
+    };
   },
 
   async updateAdminPin(pin: string): Promise<{ success: boolean; message: string }> {
@@ -437,6 +456,29 @@ export const mySqlService = {
       await p.query('INSERT INTO `settings` (admin_pin) VALUES (?)', [cleanPin]);
     }
     return { success: true, message: 'PIN Admin berhasil diperbarui' };
+  },
+
+  async getConversionConfig(): Promise<ChickenConversionConfig> {
+    return this.getMasterConfig('chicken_conversion', DEFAULT_CHICKEN_CONVERSION);
+  },
+
+  async updateConversionConfig(cfg: Partial<ChickenConversionConfig>): Promise<ChickenConversionConfig> {
+    const current = await this.getConversionConfig();
+    const pbRatio = Number(cfg.pb_ratio);
+    const pkRatio = Number(cfg.pk_ratio);
+    const pbWeight = Number(cfg.pb_kg_weight);
+    const pkWeight = Number(cfg.pk_kg_weight);
+    const riceRatio = Number(cfg.masak_nasi_ratio);
+
+    const updated: ChickenConversionConfig = {
+      pb_ratio: !isNaN(pbRatio) && pbRatio > 0 ? pbRatio : current.pb_ratio,
+      pk_ratio: !isNaN(pkRatio) && pkRatio > 0 ? pkRatio : current.pk_ratio,
+      pb_kg_weight: !isNaN(pbWeight) && pbWeight > 0 ? pbWeight : current.pb_kg_weight,
+      pk_kg_weight: !isNaN(pkWeight) && pkWeight > 0 ? pkWeight : current.pk_kg_weight,
+      masak_nasi_ratio: !isNaN(riceRatio) && riceRatio > 0 ? riceRatio : (current.masak_nasi_ratio ?? 12),
+    };
+    await this.saveMasterConfig('chicken_conversion', updated);
+    return updated;
   },
 
   // --- Outlets ---
@@ -511,7 +553,7 @@ export const mySqlService = {
   // --- Products ---
   async getProducts(outletType?: string): Promise<Product[]> {
     const p = getPool();
-    let query = 'SELECT product_id as id, product_name as name, selling_price, outlet_type, description, items_composition, is_active FROM `products`';
+    let query = 'SELECT product_id as id, product_name as name, selling_price, outlet_type, description, items_composition, barang_id, is_active FROM `products`';
     const params: any[] = [];
 
     if (outletType && outletType !== 'all') {
@@ -521,15 +563,20 @@ export const mySqlService = {
     query += ' ORDER BY product_id ASC';
 
     const [rows] = await p.query<RowDataPacket[]>(query, params);
-    return rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      selling_price: Number(r.selling_price) || 0,
-      active: Boolean(r.is_active),
-      outlet_type: r.outlet_type || 'all',
-      description: r.description || '',
-      items_composition: typeof r.items_composition === 'string' ? JSON.parse(r.items_composition) : r.items_composition || undefined,
-    }));
+    return rows.map((r) => {
+      const defaultMatch = DEFAULT_PRODUCTS.find((p) => p.id === r.id || p.name.toLowerCase() === r.name?.toLowerCase());
+      const resolvedBarangId = r.barang_id !== null && r.barang_id !== undefined ? Number(r.barang_id) : (defaultMatch?.barang_id || undefined);
+      return {
+        id: r.id,
+        name: r.name,
+        selling_price: Number(r.selling_price) || 0,
+        active: Boolean(r.is_active),
+        outlet_type: r.outlet_type || 'all',
+        description: r.description || '',
+        items_composition: typeof r.items_composition === 'string' ? JSON.parse(r.items_composition) : r.items_composition || undefined,
+        barang_id: resolvedBarangId,
+      };
+    });
   },
 
   async createProduct(data: Partial<Product>): Promise<Product> {
@@ -537,8 +584,10 @@ export const mySqlService = {
     const name = String(data.name || '').trim();
     if (!name) throw new Error('Nama produk wajib diisi');
 
+    const barang_id = data.barang_id ? Number(data.barang_id) : null;
+
     const [res] = await p.query<ResultSetHeader>(
-      'INSERT INTO `products` (product_name, selling_price, cost_price, unit, outlet_type, description, items_composition, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `products` (product_name, selling_price, cost_price, unit, outlet_type, description, items_composition, barang_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         name,
         Number(data.selling_price) || 0,
@@ -547,6 +596,7 @@ export const mySqlService = {
         data.outlet_type || 'all',
         data.description || null,
         data.items_composition ? JSON.stringify(data.items_composition) : null,
+        barang_id,
         data.active !== false ? 1 : 0,
       ]
     );
@@ -559,6 +609,7 @@ export const mySqlService = {
       outlet_type: data.outlet_type || 'all',
       description: data.description || '',
       items_composition: data.items_composition,
+      barang_id: barang_id ? Number(barang_id) : undefined,
     };
   },
 
@@ -574,15 +625,17 @@ export const mySqlService = {
     const description = data.description !== undefined ? data.description : current.description;
     const items_composition = data.items_composition !== undefined ? data.items_composition : current.items_composition;
     const is_active = data.active !== undefined ? (data.active ? 1 : 0) : current.is_active;
+    const barang_id = data.barang_id !== undefined ? (data.barang_id ? Number(data.barang_id) : null) : (current.barang_id ?? null);
 
     await p.query(
-      'UPDATE `products` SET product_name = ?, selling_price = ?, outlet_type = ?, description = ?, items_composition = ?, is_active = ? WHERE product_id = ?',
+      'UPDATE `products` SET product_name = ?, selling_price = ?, outlet_type = ?, description = ?, items_composition = ?, barang_id = ?, is_active = ? WHERE product_id = ?',
       [
         name,
         selling_price,
         outlet_type,
         description,
         items_composition ? JSON.stringify(items_composition) : null,
+        barang_id,
         is_active,
         id,
       ]
@@ -596,6 +649,7 @@ export const mySqlService = {
       outlet_type: outlet_type || 'all',
       description: description || '',
       items_composition: typeof items_composition === 'string' ? JSON.parse(items_composition) : items_composition,
+      barang_id: barang_id ? Number(barang_id) : undefined,
     };
   },
 
@@ -623,13 +677,47 @@ export const mySqlService = {
     );
   },
 
+  // --- Master Barang CRUD ---
+  async getMasterBarang(): Promise<MasterBarangItem[]> {
+    return this.getMasterConfig('master_barang', DEFAULT_MASTER_BARANG);
+  },
+  async createMasterBarang(item: Omit<MasterBarangItem, 'id'>): Promise<MasterBarangItem> {
+    const items = await this.getMasterBarang();
+    const nextId = items.length > 0 ? Math.max(...items.map((i) => i.id)) + 1 : 1;
+    const newItem: MasterBarangItem = { ...item, id: nextId };
+    items.push(newItem);
+    await this.saveMasterConfig('master_barang', items);
+    return newItem;
+  },
+  async updateMasterBarang(id: number, item: Partial<MasterBarangItem>): Promise<MasterBarangItem | null> {
+    const items = await this.getMasterBarang();
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return null;
+    items[idx] = { ...items[idx], ...item };
+    await this.saveMasterConfig('master_barang', items);
+    return items[idx];
+  },
+  async deleteMasterBarang(id: number): Promise<boolean> {
+    const items = await this.getMasterBarang();
+    const filtered = items.filter((i) => i.id !== id);
+    if (filtered.length === items.length) return false;
+    await this.saveMasterConfig('master_barang', filtered);
+    return true;
+  },
+
   async getStockItems(): Promise<StockMasterItem[]> {
-    return this.getMasterConfig('stock_items', DEFAULT_STOCK_ITEMS);
+    const items = await this.getMasterConfig('stock_items', DEFAULT_STOCK_ITEMS);
+    return items.map((item) => {
+      if (item.barang_id) return item;
+      const def = DEFAULT_STOCK_ITEMS.find((d) => d.key === item.key || d.name.toLowerCase() === item.name.toLowerCase());
+      return def?.barang_id ? { ...item, barang_id: def.barang_id } : item;
+    });
   },
   async createStockItem(item: Omit<StockMasterItem, 'id'>): Promise<StockMasterItem> {
     const items = await this.getStockItems();
     const nextId = items.length > 0 ? Math.max(...items.map((i) => i.id)) + 1 : 1;
-    const newItem = { ...item, id: nextId };
+    const cleanKey = item.key || item.name.toLowerCase().replace(/[^a-z0-9_]/gi, '_').replace(/^_+|_+$/g, '') || `stock_${nextId}`;
+    const newItem = { ...item, key: cleanKey, id: nextId };
     items.push(newItem);
     await this.saveMasterConfig('stock_items', items);
     return newItem;
@@ -651,12 +739,18 @@ export const mySqlService = {
   },
 
   async getTosserItems(): Promise<TosserMasterItem[]> {
-    return this.getMasterConfig('tosser_items', DEFAULT_TOSSER_ITEMS);
+    const items = await this.getMasterConfig('tosser_items', DEFAULT_TOSSER_ITEMS);
+    return items.map((item) => {
+      if (item.barang_id) return item;
+      const def = DEFAULT_TOSSER_ITEMS.find((d) => d.key === item.key || d.name.toLowerCase() === item.name.toLowerCase());
+      return def?.barang_id ? { ...item, barang_id: def.barang_id } : item;
+    });
   },
   async createTosserItem(item: Omit<TosserMasterItem, 'id'>): Promise<TosserMasterItem> {
     const items = await this.getTosserItems();
     const nextId = items.length > 0 ? Math.max(...items.map((i) => i.id)) + 1 : 1;
-    const newItem = { ...item, id: nextId };
+    const cleanKey = item.key || item.name.toLowerCase().replace(/[^a-z0-9_]/gi, '_').replace(/^_+|_+$/g, '') || `tosser_${nextId}`;
+    const newItem = { ...item, key: cleanKey, id: nextId };
     items.push(newItem);
     await this.saveMasterConfig('tosser_items', items);
     return newItem;
@@ -678,12 +772,17 @@ export const mySqlService = {
   },
 
   async getExpenseCategories(): Promise<ExpenseCategoryItem[]> {
-    return this.getMasterConfig('expense_categories', DEFAULT_EXPENSE_CATEGORIES);
+    const items = await this.getMasterConfig('expense_categories', DEFAULT_EXPENSE_CATEGORIES);
+    return items.map((item, idx) => ({
+      ...item,
+      key: item.key || item.name.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_') || `exp_${item.id || idx + 1}`,
+    }));
   },
   async createExpenseCategory(cat: Omit<ExpenseCategoryItem, 'id'>): Promise<ExpenseCategoryItem> {
     const items = await this.getExpenseCategories();
     const nextId = items.length > 0 ? Math.max(...items.map((i) => i.id)) + 1 : 1;
-    const newItem = { ...cat, id: nextId };
+    const key = cat.key || cat.name.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_') || `exp_${nextId}`;
+    const newItem: ExpenseCategoryItem = { ...cat, key, id: nextId };
     items.push(newItem);
     await this.saveMasterConfig('expense_categories', items);
     return newItem;
@@ -692,7 +791,9 @@ export const mySqlService = {
     const items = await this.getExpenseCategories();
     const idx = items.findIndex((i) => i.id === id);
     if (idx === -1) return null;
-    items[idx] = { ...items[idx], ...cat };
+    const existing = items[idx];
+    const key = cat.key || existing.key || (cat.name || existing.name).toLowerCase().trim().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_');
+    items[idx] = { ...existing, ...cat, key };
     await this.saveMasterConfig('expense_categories', items);
     return items[idx];
   },
@@ -863,6 +964,7 @@ export const mySqlService = {
           lain_lain: Number(exp?.lain_lain) || 0,
           lain_lain_keterangan: exp?.lain_lain_keterangan || '',
           total_expense: Number(exp?.total_expense) || 0,
+          ...(parseJson(exp?.custom_expenses) || {}),
         },
         payments: {
           tunai: Number(pay?.tunai) || 0,
@@ -964,6 +1066,7 @@ export const mySqlService = {
         lain_lain: Number(exp?.lain_lain) || 0,
         lain_lain_keterangan: exp?.lain_lain_keterangan || '',
         total_expense: Number(exp?.total_expense) || 0,
+        ...(parseJson(exp?.custom_expenses) || {}),
       },
       payments: {
         tunai: Number(pay?.tunai) || 0,
@@ -1079,26 +1182,63 @@ export const mySqlService = {
     }
 
     // Insert into expenses
-    await p.query(
-      `INSERT INTO \`expenses\`
-       (\`report_id\`, \`gas\`, \`galon\`, \`clean_tools\`, \`kulit\`, \`meal\`, \`bonus\`, \`beras\`, \`saus\`, \`minyak\`, \`lain_lain\`, \`lain_lain_keterangan\`, \`total_expense\`)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        reportId,
-        Number(data.expenses?.gas) || 0,
-        Number(data.expenses?.galon) || 0,
-        Number(data.expenses?.clean_tools) || 0,
-        Number(data.expenses?.kulit) || 0,
-        Number(data.expenses?.meal) || 0,
-        Number(data.expenses?.bonus) || 0,
-        Number(data.expenses?.beras) || 0,
-        Number(data.expenses?.saus) || 0,
-        Number(data.expenses?.minyak) || 0,
-        Number(data.expenses?.lain_lain) || 0,
-        data.expenses?.lain_lain_keterangan || '',
-        totals.total_expense,
-      ]
-    );
+    const standardExpenseCols = new Set([
+      'gas', 'galon', 'clean_tools', 'kulit', 'meal', 'bonus', 'beras', 'saus', 'minyak', 'lain_lain', 'lain_lain_keterangan', 'total_expense'
+    ]);
+    const customExpensesObj: Record<string, any> = {};
+    if (data.expenses) {
+      for (const [k, v] of Object.entries(data.expenses)) {
+        if (!standardExpenseCols.has(k) && v !== undefined && v !== null && v !== 0 && v !== '') {
+          customExpensesObj[k] = v;
+        }
+      }
+    }
+    const customExpensesJson = Object.keys(customExpensesObj).length > 0 ? JSON.stringify(customExpensesObj) : null;
+
+    try {
+      await p.query(
+        `INSERT INTO \`expenses\`
+         (\`report_id\`, \`gas\`, \`galon\`, \`clean_tools\`, \`kulit\`, \`meal\`, \`bonus\`, \`beras\`, \`saus\`, \`minyak\`, \`lain_lain\`, \`lain_lain_keterangan\`, \`total_expense\`, \`custom_expenses\`)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          reportId,
+          Number(data.expenses?.gas) || 0,
+          Number(data.expenses?.galon) || 0,
+          Number(data.expenses?.clean_tools) || 0,
+          Number(data.expenses?.kulit) || 0,
+          Number(data.expenses?.meal) || 0,
+          Number(data.expenses?.bonus) || 0,
+          Number(data.expenses?.beras) || 0,
+          Number(data.expenses?.saus) || 0,
+          Number(data.expenses?.minyak) || 0,
+          Number(data.expenses?.lain_lain) || 0,
+          data.expenses?.lain_lain_keterangan || '',
+          totals.total_expense,
+          customExpensesJson,
+        ]
+      );
+    } catch {
+      await p.query(
+        `INSERT INTO \`expenses\`
+         (\`report_id\`, \`gas\`, \`galon\`, \`clean_tools\`, \`kulit\`, \`meal\`, \`bonus\`, \`beras\`, \`saus\`, \`minyak\`, \`lain_lain\`, \`lain_lain_keterangan\`, \`total_expense\`)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          reportId,
+          Number(data.expenses?.gas) || 0,
+          Number(data.expenses?.galon) || 0,
+          Number(data.expenses?.clean_tools) || 0,
+          Number(data.expenses?.kulit) || 0,
+          Number(data.expenses?.meal) || 0,
+          Number(data.expenses?.bonus) || 0,
+          Number(data.expenses?.beras) || 0,
+          Number(data.expenses?.saus) || 0,
+          Number(data.expenses?.minyak) || 0,
+          Number(data.expenses?.lain_lain) || 0,
+          data.expenses?.lain_lain_keterangan || '',
+          totals.total_expense,
+        ]
+      );
+    }
 
     // Insert into payments
     await p.query(
@@ -1264,37 +1404,86 @@ export const mySqlService = {
     }
 
     // Update expenses
-    await p.query(
-      `UPDATE \`expenses\` SET
-       \`gas\` = ?,
-       \`galon\` = ?,
-       \`clean_tools\` = ?,
-       \`kulit\` = ?,
-       \`meal\` = ?,
-       \`bonus\` = ?,
-       \`beras\` = ?,
-       \`saus\` = ?,
-       \`minyak\` = ?,
-       \`lain_lain\` = ?,
-       \`lain_lain_keterangan\` = ?,
-       \`total_expense\` = ?
-       WHERE \`report_id\` = ?`,
-      [
-        Number(data.expenses?.gas) || 0,
-        Number(data.expenses?.galon) || 0,
-        Number(data.expenses?.clean_tools) || 0,
-        Number(data.expenses?.kulit) || 0,
-        Number(data.expenses?.meal) || 0,
-        Number(data.expenses?.bonus) || 0,
-        Number(data.expenses?.beras) || 0,
-        Number(data.expenses?.saus) || 0,
-        Number(data.expenses?.minyak) || 0,
-        Number(data.expenses?.lain_lain) || 0,
-        data.expenses?.lain_lain_keterangan || '',
-        totals.total_expense,
-        id,
-      ]
-    );
+    const standardExpenseCols = new Set([
+      'gas', 'galon', 'clean_tools', 'kulit', 'meal', 'bonus', 'beras', 'saus', 'minyak', 'lain_lain', 'lain_lain_keterangan', 'total_expense'
+    ]);
+    const customExpensesObj: Record<string, any> = {};
+    if (data.expenses) {
+      for (const [k, v] of Object.entries(data.expenses)) {
+        if (!standardExpenseCols.has(k) && v !== undefined && v !== null && v !== 0 && v !== '') {
+          customExpensesObj[k] = v;
+        }
+      }
+    }
+    const customExpensesJson = Object.keys(customExpensesObj).length > 0 ? JSON.stringify(customExpensesObj) : null;
+
+    try {
+      await p.query(
+        `UPDATE \`expenses\` SET
+         \`gas\` = ?,
+         \`galon\` = ?,
+         \`clean_tools\` = ?,
+         \`kulit\` = ?,
+         \`meal\` = ?,
+         \`bonus\` = ?,
+         \`beras\` = ?,
+         \`saus\` = ?,
+         \`minyak\` = ?,
+         \`lain_lain\` = ?,
+         \`lain_lain_keterangan\` = ?,
+         \`total_expense\` = ?,
+         \`custom_expenses\` = ?
+         WHERE \`report_id\` = ?`,
+        [
+          Number(data.expenses?.gas) || 0,
+          Number(data.expenses?.galon) || 0,
+          Number(data.expenses?.clean_tools) || 0,
+          Number(data.expenses?.kulit) || 0,
+          Number(data.expenses?.meal) || 0,
+          Number(data.expenses?.bonus) || 0,
+          Number(data.expenses?.beras) || 0,
+          Number(data.expenses?.saus) || 0,
+          Number(data.expenses?.minyak) || 0,
+          Number(data.expenses?.lain_lain) || 0,
+          data.expenses?.lain_lain_keterangan || '',
+          totals.total_expense,
+          customExpensesJson,
+          id,
+        ]
+      );
+    } catch {
+      await p.query(
+        `UPDATE \`expenses\` SET
+         \`gas\` = ?,
+         \`galon\` = ?,
+         \`clean_tools\` = ?,
+         \`kulit\` = ?,
+         \`meal\` = ?,
+         \`bonus\` = ?,
+         \`beras\` = ?,
+         \`saus\` = ?,
+         \`minyak\` = ?,
+         \`lain_lain\` = ?,
+         \`lain_lain_keterangan\` = ?,
+         \`total_expense\` = ?
+         WHERE \`report_id\` = ?`,
+        [
+          Number(data.expenses?.gas) || 0,
+          Number(data.expenses?.galon) || 0,
+          Number(data.expenses?.clean_tools) || 0,
+          Number(data.expenses?.kulit) || 0,
+          Number(data.expenses?.meal) || 0,
+          Number(data.expenses?.bonus) || 0,
+          Number(data.expenses?.beras) || 0,
+          Number(data.expenses?.saus) || 0,
+          Number(data.expenses?.minyak) || 0,
+          Number(data.expenses?.lain_lain) || 0,
+          data.expenses?.lain_lain_keterangan || '',
+          totals.total_expense,
+          id,
+        ]
+      );
+    }
 
     // Update payments
     await p.query(

@@ -25,10 +25,18 @@ import {
   ToggleLeft,
   ToggleRight,
   TrendingDown,
+  Scale,
+  Flame,
+  Minus,
+  Boxes,
 } from 'lucide-react';
 import {
+  ChickenConversionConfig,
+  DEFAULT_CHICKEN_CONVERSION,
+  DEFAULT_MASTER_BARANG,
   EndingStockMasterItem,
   ExpenseCategoryItem,
+  MasterBarangItem,
   OutletItem,
   Product,
   StockMasterItem,
@@ -45,9 +53,20 @@ interface MasterManagementProps {
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   showToast: (text: string, type?: 'success' | 'error') => void;
   onLockAdmin?: () => void;
+  conversion: ChickenConversionConfig;
+  onConversionChange: (newConversion: ChickenConversionConfig) => void;
+  expenseCategories?: ExpenseCategoryItem[];
+  onExpenseCategoriesChange?: (categories: ExpenseCategoryItem[]) => void;
+  stockItems?: StockMasterItem[];
+  setStockItems?: React.Dispatch<React.SetStateAction<StockMasterItem[]>>;
+  tosserItems?: TosserMasterItem[];
+  setTosserItems?: React.Dispatch<React.SetStateAction<TosserMasterItem[]>>;
+  endingStockItems?: EndingStockMasterItem[];
+  setEndingStockItems?: React.Dispatch<React.SetStateAction<EndingStockMasterItem[]>>;
 }
 
 type SubTab =
+  | 'barang'
   | 'outlets'
   | 'stock'
   | 'tosser_in'
@@ -55,6 +74,7 @@ type SubTab =
   | 'sales'
   | 'ending_stock'
   | 'expenses'
+  | 'conversion'
   | 'security';
 
 export const MasterManagement: React.FC<MasterManagementProps> = ({
@@ -66,16 +86,120 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
   setProducts,
   showToast,
   onLockAdmin,
+  conversion,
+  onConversionChange,
+  expenseCategories: propExpenseCategories,
+  onExpenseCategoriesChange,
+  stockItems: propStockItems,
+  setStockItems: propSetStockItems,
+  tosserItems: propTosserItems,
+  setTosserItems: propSetTosserItems,
+  endingStockItems: propEndingStockItems,
+  setEndingStockItems: propSetEndingStockItems,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('outlets');
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>('barang');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Conversion Form State
+  const [conversionForm, setConversionForm] = useState<ChickenConversionConfig>(() => ({
+    pb_ratio: conversion?.pb_ratio ?? 5,
+    pk_ratio: conversion?.pk_ratio ?? 4,
+    pb_kg_weight: conversion?.pb_kg_weight ?? 0.5,
+    pk_kg_weight: conversion?.pk_kg_weight ?? 0.5,
+    masak_nasi_ratio: conversion?.masak_nasi_ratio ?? 12,
+  }));
+  const [savingConversion, setSavingConversion] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (conversion) {
+      setConversionForm({
+        pb_ratio: conversion.pb_ratio ?? 5,
+        pk_ratio: conversion.pk_ratio ?? 4,
+        pb_kg_weight: conversion.pb_kg_weight ?? 0.5,
+        pk_kg_weight: conversion.pk_kg_weight ?? 0.5,
+        masak_nasi_ratio: conversion.masak_nasi_ratio ?? 12,
+      });
+    }
+  }, [conversion]);
+
+  const handleSaveConversion = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSavingConversion(true);
+    try {
+      const payload: ChickenConversionConfig = {
+        pb_ratio: Math.max(1, Number(conversionForm.pb_ratio) || 5),
+        pk_ratio: Math.max(1, Number(conversionForm.pk_ratio) || 4),
+        pb_kg_weight: Math.max(0.1, Math.round((Number(conversionForm.pb_kg_weight) || 0.5) * 100) / 100),
+        pk_kg_weight: Math.max(0.1, Math.round((Number(conversionForm.pk_kg_weight) || 0.5) * 100) / 100),
+        masak_nasi_ratio: Math.max(1, Number(conversionForm.masak_nasi_ratio) || 12),
+      };
+
+      const res = await fetch('/api/settings/conversion', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Gagal menyimpan pengaturan konversi');
+      }
+
+      const resData = await res.json();
+      const updated = resData.conversion || payload;
+      onConversionChange(updated);
+      try {
+        localStorage.setItem('hd_chicken_conversion', JSON.stringify(updated));
+      } catch {}
+      showToast('Pengaturan konversi 1kg ayam mentah berhasil diperbarui!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menyimpan pengaturan konversi', 'error');
+    } finally {
+      setSavingConversion(false);
+    }
+  };
+
+  const handleResetConversionToDefault = (pb: number = 5, pk: number = 4) => {
+    setConversionForm({
+      pb_ratio: pb,
+      pk_ratio: pk,
+      pb_kg_weight: 0.5,
+      pk_kg_weight: 0.5,
+      masak_nasi_ratio: 12,
+    });
+  };
+
   // Master States
-  const [stockItems, setStockItems] = useState<StockMasterItem[]>([]);
-  const [tosserItems, setTosserItems] = useState<TosserMasterItem[]>([]);
-  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategoryItem[]>([]);
-  const [endingStockItems, setEndingStockItems] = useState<EndingStockMasterItem[]>([]);
+  const [masterBarang, setMasterBarang] = useState<MasterBarangItem[]>([]);
+  const [stockItems, setStockItems] = useState<StockMasterItem[]>(() => propStockItems || []);
+  const [tosserItems, setTosserItems] = useState<TosserMasterItem[]>(() => propTosserItems || []);
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategoryItem[]>(() => propExpenseCategories || []);
+  const [endingStockItems, setEndingStockItems] = useState<EndingStockMasterItem[]>(() => propEndingStockItems || []);
   const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (propStockItems && propStockItems.length > 0) {
+      setStockItems(propStockItems);
+    }
+  }, [propStockItems]);
+
+  useEffect(() => {
+    if (propTosserItems && propTosserItems.length > 0) {
+      setTosserItems(propTosserItems);
+    }
+  }, [propTosserItems]);
+
+  useEffect(() => {
+    if (propEndingStockItems && propEndingStockItems.length > 0) {
+      setEndingStockItems(propEndingStockItems);
+    }
+  }, [propEndingStockItems]);
+
+  useEffect(() => {
+    if (propExpenseCategories && propExpenseCategories.length > 0) {
+      setExpenseCategories(propExpenseCategories);
+    }
+  }, [propExpenseCategories]);
 
   // Sub-filter states
   const [outletTypeFilter, setOutletTypeFilter] = useState<'all' | 'traditional' | 'modern'>('all');
@@ -86,6 +210,16 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [currentEditItem, setCurrentEditItem] = useState<any>(null);
 
+  // Form Fields for Master Barang Modal
+  const [barangForm, setBarangForm] = useState<{
+    code: string;
+    name: string;
+    category: 'raw' | 'ready' | 'other';
+    unit: string;
+    description: string;
+    active: boolean;
+  }>({ code: '', name: '', category: 'ready', unit: 'pcs', description: '', active: true });
+
   // Form Fields for Outlet Modal
   const [outletForm, setOutletForm] = useState<{
     name: string;
@@ -95,31 +229,34 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
     outlet_type: 'traditional' | 'modern';
   }>({ name: '', address: '', phone: '', active: true, outlet_type: 'traditional' });
 
-  // Form Fields for Product Modal
+  // Form Fields for Product Modal (Sales)
   const [productForm, setProductForm] = useState<{
     name: string;
     selling_price: number;
     active: boolean;
     outlet_type: 'traditional' | 'modern' | 'all';
     description: string;
-  }>({ name: '', selling_price: 0, active: true, outlet_type: 'traditional', description: '' });
+    barang_id: number | '';
+  }>({ name: '', selling_price: 0, active: true, outlet_type: 'all', description: '', barang_id: '' });
 
-  // Form Fields for Stock Item Modal
+  // Form Fields for Stock Item Modal (Beginning Stock)
   const [stockForm, setStockForm] = useState<{
     name: string;
     category: 'raw' | 'ready';
     unit: string;
     default_value: string;
     active: boolean;
-  }>({ name: '', category: 'raw', unit: 'kg', default_value: '', active: true });
+    barang_id: number | '';
+  }>({ name: '', category: 'raw', unit: 'kg', default_value: '', active: true, barang_id: '' });
 
-  // Form Fields for Tosser Item Modal
+  // Form Fields for Tosser Item Modal (In / Out)
   const [tosserForm, setTosserForm] = useState<{
     name: string;
     type: 'in' | 'out' | 'both';
     unit: string;
     active: boolean;
-  }>({ name: '', type: 'both', unit: 'pcs', active: true });
+    barang_id: number | '';
+  }>({ name: '', type: 'both', unit: 'pcs', active: true, barang_id: '' });
 
   // Form Fields for Expense Category Modal
   const [expenseForm, setExpenseForm] = useState({
@@ -149,7 +286,8 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
   const fetchAllMasterData = async () => {
     setLoading(true);
     try {
-      const [outletsRes, productsRes, stockRes, tosserRes, expenseRes, endingRes] = await Promise.all([
+      const [barangRes, outletsRes, productsRes, stockRes, tosserRes, expenseRes, endingRes] = await Promise.all([
+        fetch('/api/master/barang').catch(() => null),
         fetch('/api/outlets').catch(() => null),
         fetch('/api/products').catch(() => null),
         fetch('/api/master/stock-items').catch(() => null),
@@ -158,6 +296,10 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         fetch('/api/master/ending-stock-items').catch(() => null),
       ]);
 
+      if (barangRes?.ok) {
+        const data = await barangRes.json();
+        setMasterBarang(data);
+      }
       if (outletsRes?.ok) {
         const data = await outletsRes.json();
         setOutlets(data);
@@ -169,18 +311,22 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
       if (stockRes?.ok) {
         const data = await stockRes.json();
         setStockItems(data);
+        propSetStockItems?.(data);
       }
       if (tosserRes?.ok) {
         const data = await tosserRes.json();
         setTosserItems(data);
+        propSetTosserItems?.(data);
       }
       if (expenseRes?.ok) {
         const data = await expenseRes.json();
         setExpenseCategories(data);
+        onExpenseCategoriesChange?.(data);
       }
       if (endingRes?.ok) {
         const data = await endingRes.json();
         setEndingStockItems(data);
+        propSetEndingStockItems?.(data);
       }
     } catch (err) {
       console.warn('Gagal memuat beberapa data master:', err);
@@ -198,6 +344,18 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return name.toLowerCase().includes(q) || (extra && extra.toLowerCase().includes(q));
+  };
+
+  // Helper lookup nama barang dari ID
+  const getBarangName = (id?: number) => {
+    if (!id) return null;
+    const b = masterBarang.find((item) => item.id === id);
+    return b ? b.name : `Barang #${id}`;
+  };
+
+  const getBarangItem = (id?: number) => {
+    if (!id) return null;
+    return masterBarang.find((item) => item.id === id);
   };
 
   // ----------------------------------------------------
@@ -331,6 +489,112 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
   };
 
   // ----------------------------------------------------
+  // DATA BARANG (MASTER BARANG) CRUD
+  // ----------------------------------------------------
+  const handleOpenBarangModal = (item?: MasterBarangItem) => {
+    if (item) {
+      setModalMode('edit');
+      setCurrentEditItem(item);
+      setBarangForm({
+        code: item.code || '',
+        name: item.name,
+        category: item.category || 'ready',
+        unit: item.unit || 'pcs',
+        description: item.description || '',
+        active: item.active,
+      });
+    } else {
+      setModalMode('create');
+      setCurrentEditItem(null);
+      setBarangForm({
+        code: '',
+        name: '',
+        category: 'ready',
+        unit: 'pcs',
+        description: '',
+        active: true,
+      });
+    }
+    setModalOpen(true);
+  };
+
+  const handleSaveBarang = async () => {
+    if (!barangForm.name.trim()) {
+      showToast('Nama barang wajib diisi!', 'error');
+      return;
+    }
+    try {
+      if (modalMode === 'create') {
+        const res = await fetch('/api/master/barang', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(barangForm),
+        });
+        if (!res.ok) throw new Error('Gagal menambah data barang');
+        const created = await res.json();
+        setMasterBarang((prev) => [...prev, created]);
+        showToast(`Barang "${created.name}" berhasil ditambahkan!`, 'success');
+      } else {
+        const res = await fetch(`/api/master/barang/${currentEditItem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(barangForm),
+        });
+        if (!res.ok) throw new Error('Gagal memperbarui data barang');
+        const updated = await res.json();
+        setMasterBarang((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+        showToast(`Barang "${updated.name}" berhasil diperbarui!`, 'success');
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      showToast(err.message || 'Operasi gagal', 'error');
+    }
+  };
+
+  const handleDeleteBarang = async (item: MasterBarangItem) => {
+    const usedInStock = stockItems.filter((s) => s.barang_id === item.id);
+    const usedInTosser = tosserItems.filter((t) => t.barang_id === item.id);
+    const usedInSales = products.filter((p) => p.barang_id === item.id);
+    const totalRelations = usedInStock.length + usedInTosser.length + usedInSales.length;
+
+    let confirmMsg = `Yakin ingin menghapus master barang "${item.name}" (ID #${item.id})?`;
+    if (totalRelations > 0) {
+      confirmMsg += `\n\nPERINGATAN: Barang ini saat ini terhubung dengan:
+- ${usedInStock.length} Item Stok Awal
+- ${usedInTosser.length} Item Tosser In/Out
+- ${usedInSales.length} Menu Sales
+Data transaksi akan tetap ada, tetapi relasi barang ini akan terputus.`;
+    }
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`/api/master/barang/${item.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Gagal menghapus barang');
+      setMasterBarang((prev) => prev.filter((b) => b.id !== item.id));
+      showToast(`Barang "${item.name}" berhasil dihapus!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menghapus', 'error');
+    }
+  };
+
+  const handleToggleBarangStatus = async (item: MasterBarangItem) => {
+    try {
+      const res = await fetch(`/api/master/barang/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !item.active }),
+      });
+      if (!res.ok) throw new Error('Gagal mengubah status barang');
+      const updated = await res.json();
+      setMasterBarang((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+      showToast(`Status barang "${updated.name}" berhasil diubah.`, 'success');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // ----------------------------------------------------
   // PRODUCT (SALES) CRUD
   // ----------------------------------------------------
   const handleOpenProductModal = (item?: Product) => {
@@ -343,11 +607,12 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         active: item.active,
         outlet_type: item.outlet_type || 'traditional',
         description: item.description || '',
+        barang_id: item.barang_id ?? '',
       });
     } else {
       setModalMode('create');
       setCurrentEditItem(null);
-      setProductForm({ name: '', selling_price: 0, active: true, outlet_type: 'traditional', description: '' });
+      setProductForm({ name: '', selling_price: 0, active: true, outlet_type: 'traditional', description: '', barang_id: '' });
     }
     setModalOpen(true);
   };
@@ -358,11 +623,15 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
       return;
     }
     try {
+      const payload = {
+        ...productForm,
+        barang_id: productForm.barang_id ? Number(productForm.barang_id) : undefined,
+      };
       if (modalMode === 'create') {
         const res = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal menambah produk');
         const created = await res.json();
@@ -372,7 +641,7 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         const res = await fetch(`/api/products/${currentEditItem.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal memperbarui produk');
         const updated = await res.json();
@@ -410,11 +679,12 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         unit: item.unit,
         default_value: item.default_value || '',
         active: item.active,
+        barang_id: item.barang_id ?? '',
       });
     } else {
       setModalMode('create');
       setCurrentEditItem(null);
-      setStockForm({ name: '', category: 'raw', unit: 'kg', default_value: '', active: true });
+      setStockForm({ name: '', category: 'raw', unit: 'kg', default_value: '', active: true, barang_id: '' });
     }
     setModalOpen(true);
   };
@@ -425,25 +695,39 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
       return;
     }
     try {
+      const cleanKey = stockForm.name.toLowerCase().replace(/[^a-z0-9_]/gi, '_').replace(/^_+|_+$/g, '') || `stock_${Date.now()}`;
+      const payload = {
+        ...stockForm,
+        key: currentEditItem?.key || cleanKey,
+        barang_id: stockForm.barang_id ? Number(stockForm.barang_id) : undefined,
+      };
       if (modalMode === 'create') {
         const res = await fetch('/api/master/stock-items', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(stockForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal menambah item stok');
         const created = await res.json();
-        setStockItems((prev) => [...prev, created]);
+        setStockItems((prev) => {
+          const next = [...prev, created];
+          propSetStockItems?.(next);
+          return next;
+        });
         showToast(`Item stok "${created.name}" berhasil ditambahkan!`, 'success');
       } else {
         const res = await fetch(`/api/master/stock-items/${currentEditItem.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(stockForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal memperbarui item stok');
         const updated = await res.json();
-        setStockItems((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+        setStockItems((prev) => {
+          const next = prev.map((s) => (s.id === updated.id ? updated : s));
+          propSetStockItems?.(next);
+          return next;
+        });
         showToast(`Item stok "${updated.name}" berhasil diperbarui!`, 'success');
       }
       setModalOpen(false);
@@ -457,7 +741,11 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
     try {
       const res = await fetch(`/api/master/stock-items/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus item');
-      setStockItems((prev) => prev.filter((s) => s.id !== item.id));
+      setStockItems((prev) => {
+        const next = prev.filter((s) => s.id !== item.id);
+        propSetStockItems?.(next);
+        return next;
+      });
       showToast(`Item stok "${item.name}" berhasil dihapus!`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Gagal menghapus', 'error');
@@ -476,6 +764,7 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         type: item.type,
         unit: item.unit,
         active: item.active,
+        barang_id: item.barang_id ?? '',
       });
     } else {
       setModalMode('create');
@@ -485,6 +774,7 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         type: defaultType,
         unit: 'pcs',
         active: true,
+        barang_id: '',
       });
     }
     setModalOpen(true);
@@ -496,25 +786,39 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
       return;
     }
     try {
+      const cleanKey = tosserForm.name.toLowerCase().replace(/[^a-z0-9_]/gi, '_').replace(/^_+|_+$/g, '') || `tosser_${Date.now()}`;
+      const payload = {
+        ...tosserForm,
+        key: currentEditItem?.key || cleanKey,
+        barang_id: tosserForm.barang_id ? Number(tosserForm.barang_id) : undefined,
+      };
       if (modalMode === 'create') {
         const res = await fetch('/api/master/tosser-items', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(tosserForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal menambah item tosser');
         const created = await res.json();
-        setTosserItems((prev) => [...prev, created]);
+        setTosserItems((prev) => {
+          const next = [...prev, created];
+          propSetTosserItems?.(next);
+          return next;
+        });
         showToast(`Item tosser "${created.name}" berhasil ditambahkan!`, 'success');
       } else {
         const res = await fetch(`/api/master/tosser-items/${currentEditItem.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(tosserForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal memperbarui item tosser');
         const updated = await res.json();
-        setTosserItems((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+        setTosserItems((prev) => {
+          const next = prev.map((t) => (t.id === updated.id ? updated : t));
+          propSetTosserItems?.(next);
+          return next;
+        });
         showToast(`Item tosser "${updated.name}" berhasil diperbarui!`, 'success');
       }
       setModalOpen(false);
@@ -528,7 +832,11 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
     try {
       const res = await fetch(`/api/master/tosser-items/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus item');
-      setTosserItems((prev) => prev.filter((t) => t.id !== item.id));
+      setTosserItems((prev) => {
+        const next = prev.filter((t) => t.id !== item.id);
+        propSetTosserItems?.(next);
+        return next;
+      });
       showToast(`Item tosser "${item.name}" berhasil dihapus!`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Gagal menghapus', 'error');
@@ -570,7 +878,11 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         });
         if (!res.ok) throw new Error('Gagal menambah item sisa stok');
         const created = await res.json();
-        setEndingStockItems((prev) => [...prev, created]);
+        setEndingStockItems((prev) => {
+          const next = [...prev, created];
+          propSetEndingStockItems?.(next);
+          return next;
+        });
         showToast(`Item sisa stok "${created.name}" berhasil ditambahkan!`, 'success');
       } else {
         const res = await fetch(`/api/master/ending-stock-items/${currentEditItem.id}`, {
@@ -580,7 +892,11 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
         });
         if (!res.ok) throw new Error('Gagal memperbarui item');
         const updated = await res.json();
-        setEndingStockItems((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+        setEndingStockItems((prev) => {
+          const next = prev.map((e) => (e.id === updated.id ? updated : e));
+          propSetEndingStockItems?.(next);
+          return next;
+        });
         showToast(`Item sisa stok "${updated.name}" berhasil diperbarui!`, 'success');
       }
       setModalOpen(false);
@@ -594,7 +910,11 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
     try {
       const res = await fetch(`/api/master/ending-stock-items/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus item');
-      setEndingStockItems((prev) => prev.filter((e) => e.id !== item.id));
+      setEndingStockItems((prev) => {
+        const next = prev.filter((e) => e.id !== item.id);
+        propSetEndingStockItems?.(next);
+        return next;
+      });
       showToast(`Item sisa stok "${item.name}" berhasil dihapus!`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Gagal menghapus', 'error');
@@ -628,25 +948,43 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
       return;
     }
     try {
+      const generatedKey =
+        currentEditItem?.key ||
+        expenseForm.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9_]/g, '_')
+          .replace(/_+/g, '_') ||
+        `exp_${Date.now()}`;
+      const payload = { ...expenseForm, key: generatedKey };
+
       if (modalMode === 'create') {
         const res = await fetch('/api/master/expense-categories', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(expenseForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal menambah kategori pengeluaran');
         const created = await res.json();
-        setExpenseCategories((prev) => [...prev, created]);
+        setExpenseCategories((prev) => {
+          const next = [...prev, created];
+          onExpenseCategoriesChange?.(next);
+          return next;
+        });
         showToast(`Pengeluaran "${created.name}" berhasil ditambahkan!`, 'success');
       } else {
         const res = await fetch(`/api/master/expense-categories/${currentEditItem.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(expenseForm),
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('Gagal memperbarui pengeluaran');
         const updated = await res.json();
-        setExpenseCategories((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+        setExpenseCategories((prev) => {
+          const next = prev.map((e) => (e.id === updated.id ? updated : e));
+          onExpenseCategoriesChange?.(next);
+          return next;
+        });
         showToast(`Pengeluaran "${updated.name}" berhasil diperbarui!`, 'success');
       }
       setModalOpen(false);
@@ -660,7 +998,11 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
     try {
       const res = await fetch(`/api/master/expense-categories/${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus');
-      setExpenseCategories((prev) => prev.filter((e) => e.id !== item.id));
+      setExpenseCategories((prev) => {
+        const next = prev.filter((e) => e.id !== item.id);
+        onExpenseCategoriesChange?.(next);
+        return next;
+      });
       showToast(`Pengeluaran "${item.name}" berhasil dihapus!`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Gagal menghapus', 'error');
@@ -669,13 +1011,15 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
 
   // Sub tabs definition
   const subTabs = [
-    { id: 'outlets', label: 'Outlet', icon: Store, count: outlets.length },
+    { id: 'barang', label: 'Data Barang', icon: Boxes, count: masterBarang.length },
     { id: 'stock', label: 'Beginning Stock', icon: Package, count: stockItems.length },
     { id: 'tosser_in', label: 'Tosser In', icon: ArrowDownToLine, count: tosserItems.filter(t => t.type === 'in' || t.type === 'both').length },
     { id: 'tosser_out', label: 'Tosser Out', icon: ArrowUpFromLine, count: tosserItems.filter(t => t.type === 'out' || t.type === 'both').length },
     { id: 'sales', label: 'Sales', icon: ShoppingBag, count: products.length },
+    { id: 'outlets', label: 'Outlet', icon: Store, count: outlets.length },
     { id: 'ending_stock', label: 'Ending Stock', icon: Clock, count: endingStockItems.length },
     { id: 'expenses', label: 'Pengeluaran', icon: DollarSign, count: expenseCategories.length },
+    { id: 'conversion', label: 'Konversi Ayam', icon: Scale },
     { id: 'security', label: 'Ubah PIN', icon: ShieldCheck },
   ];
 
@@ -763,7 +1107,7 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
       </div>
 
       {/* Search & Action Bar (for CRUD tabs) */}
-      {activeSubTab !== 'security' && (
+      {activeSubTab !== 'security' && activeSubTab !== 'conversion' && (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-white p-3 rounded-2xl border border-slate-200/90 shadow-xs">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -777,6 +1121,17 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {activeSubTab === 'barang' && (
+              <button
+                type="button"
+                id="btn-add-barang"
+                onClick={() => handleOpenBarangModal()}
+                className="px-4 py-2 bg-[#E4002B] hover:bg-[#c40024] text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer min-h-[38px] w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Data Barang</span>
+              </button>
+            )}
             {activeSubTab === 'outlets' && (
               <button
                 type="button"
@@ -853,6 +1208,134 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                 <Plus className="w-4 h-4" />
                 <span>Tambah Pos Pengeluaran</span>
               </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* SUB-VIEW 0: MASTER DATA BARANG CRUD                  */}
+      {/* ---------------------------------------------------- */}
+      {activeSubTab === 'barang' && (
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200/90 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Boxes className="w-4 h-4 text-purple-600" />
+                Master Data Barang ({masterBarang.length} Item)
+              </span>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Pusat referensi ID barang untuk relasi Beginning Stock, Tosser In, Tosser Out, dan Sales
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-xl border border-purple-200 font-bold">
+              <span>Semua transaksi terikat ke ID Barang unik</span>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {masterBarang.filter((b) => filterBySearch(b.name, `${b.code} ${b.description}`)).length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs font-medium">
+                Tidak ada data barang yang cocok dengan pencarian "{searchQuery}"
+              </div>
+            ) : (
+              masterBarang
+                .filter((b) => filterBySearch(b.name, `${b.code} ${b.description}`))
+                .map((item) => {
+                  const stockCount = stockItems.filter((s) => s.barang_id === item.id).length;
+                  const tosserCount = tosserItems.filter((t) => t.barang_id === item.id).length;
+                  const salesCount = products.filter((p) => p.barang_id === item.id).length;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-3.5 sm:p-4 hover:bg-slate-50/80 transition-all flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 border ${
+                            item.category === 'raw'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : item.category === 'ready'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : 'bg-blue-50 text-blue-800 border-blue-200'
+                          }`}
+                        >
+                          <span className="text-[11px]">#{item.id}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-extrabold text-slate-900 truncate">
+                              {item.name}
+                            </h4>
+                            {item.code && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-md font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                {item.code}
+                              </span>
+                            )}
+                            <span
+                              className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                item.category === 'raw'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : item.category === 'ready'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}
+                            >
+                              {item.category === 'raw' ? 'Bahan Mentah' : item.category === 'ready' ? 'Siap Jual' : 'Lainnya'}
+                            </span>
+                            <span
+                              className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                item.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {item.active ? 'Aktif' : 'Non-aktif'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-slate-500">
+                            <span>Satuan: <strong className="text-slate-700">{item.unit}</strong></span>
+                            {item.description && <span>• {item.description}</span>}
+                            <span className="inline-flex items-center gap-1 text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md font-bold border border-purple-200/60">
+                              🔗 Relasi: {stockCount} Stok Awal • {tosserCount} Tosser • {salesCount} Sales
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleBarangStatus(item)}
+                          className={`p-2 rounded-xl transition-all cursor-pointer border ${
+                            item.active
+                              ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'
+                              : 'text-slate-500 bg-slate-100 hover:bg-slate-200 border-slate-200'
+                          }`}
+                          title={item.active ? 'Non-aktifkan Barang' : 'Aktifkan Barang'}
+                        >
+                          {item.active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBarangModal(item)}
+                          className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer border border-slate-200"
+                          title="Edit Barang"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBarang(item)}
+                          className="p-2 text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all cursor-pointer border border-rose-200/70"
+                          title="Hapus Barang"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
             )}
           </div>
         </div>
@@ -1056,10 +1539,22 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                             {item.category === 'raw' ? 'Bahan Mentah' : 'Siap Jual'}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Satuan: <span className="font-semibold text-slate-700">{item.unit}</span>
-                          {item.default_value && ` • Default: ${item.default_value}`}
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <p className="text-xs text-slate-500">
+                            Satuan: <span className="font-semibold text-slate-700">{item.unit}</span>
+                            {item.default_value && ` • Default: ${item.default_value}`}
+                          </p>
+                          {item.barang_id ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                              <Boxes className="w-3 h-3 text-purple-600" />
+                              Relasi: <strong>{getBarangName(item.barang_id)}</strong> (ID #{item.barang_id})
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                              ⚠️ Belum terhubung barang
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -1138,9 +1633,21 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                           {item.type === 'both' ? 'In & Out' : item.type.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Satuan: <span className="font-semibold text-slate-700">{item.unit}</span>
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <p className="text-xs text-slate-500">
+                          Satuan: <span className="font-semibold text-slate-700">{item.unit}</span>
+                        </p>
+                        {item.barang_id ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                            <Boxes className="w-3 h-3 text-purple-600" />
+                            Relasi: <strong>{getBarangName(item.barang_id)}</strong> (ID #{item.barang_id})
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                            ⚠️ Belum terhubung barang
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -1287,6 +1794,16 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                           {product.description && (
                             <span className="text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md font-medium border border-slate-200/60">
                               {product.description}
+                            </span>
+                          )}
+                          {product.barang_id ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                              <Boxes className="w-3 h-3 text-purple-600" />
+                              Relasi: <strong>{getBarangName(product.barang_id)}</strong> (ID #{product.barang_id})
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                              ⚠️ Belum terhubung barang
                             </span>
                           )}
                         </div>
@@ -1447,7 +1964,388 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
       )}
 
       {/* ---------------------------------------------------- */}
-      {/* SUB-VIEW 8: KEAMANAN & UBAH PIN ADMIN               */}
+      {/* SUB-VIEW 8: KONVERSI 1KG AYAM MENTAH & DAPUR        */}
+      {/* ---------------------------------------------------- */}
+      {activeSubTab === 'conversion' && (
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* Hero Banner */}
+          <div className="bg-gradient-to-r from-red-950 via-slate-900 to-red-950 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-red-900/60 relative overflow-hidden">
+            <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-48 h-48 bg-[#E4002B]/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E4002B] to-[#b30022] flex items-center justify-center shadow-lg shrink-0">
+                  <Scale className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 text-[10px] font-black uppercase tracking-wider border border-red-500/30">
+                      STANDAR DAPUR OUTLET
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> Konversi Aktif
+                    </span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                    Pengaturan Konversi 1 kg Ayam Mentah
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-0.5 leading-relaxed max-w-xl">
+                    Tentukan standar potongan 1 kg ayam mentah menjadi olahan siap jual (PB & PK), rasio bobot masak dapur, dan porsi nasi. Nilai ini otomatis menyinkronkan perhitungan stok operasional.
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="bg-white/10 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/15 shrink-0 text-center sm:text-right">
+                <span className="text-[10px] text-slate-300 font-medium block">Formula 1 kg Saat Ini:</span>
+                <span className="text-base font-black text-amber-400">
+                  {conversionForm.pb_ratio} PB + {conversionForm.pk_ratio} PK
+                </span>
+                <span className="text-[10px] text-slate-300 block font-bold">
+                  ({Number(conversionForm.pb_ratio) + Number(conversionForm.pk_ratio)} Potong Ayam / kg)
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="mt-4 pt-3.5 border-t border-white/10 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-300">Pilihan Cepat Standar:</span>
+              <button
+                type="button"
+                onClick={() => handleResetConversionToDefault(5, 4)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  conversionForm.pb_ratio === 5 && conversionForm.pk_ratio === 4
+                    ? 'bg-[#E4002B] text-white shadow-xs'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
+              >
+                <span>5 PB + 4 PK (9 Potong)</span>
+                <span className="text-[9px] bg-amber-400 text-amber-950 font-black px-1.5 py-0.2 rounded-full">Standar Baru</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleResetConversionToDefault(6, 4)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  conversionForm.pb_ratio === 6 && conversionForm.pk_ratio === 4
+                    ? 'bg-[#E4002B] text-white shadow-xs'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
+              >
+                <span>6 PB + 4 PK (10 Potong)</span>
+                <span className="text-[9px] bg-slate-700 text-slate-300 font-medium px-1.5 py-0.2 rounded-full">Standar Lama</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleResetConversionToDefault(6, 6)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  conversionForm.pb_ratio === 6 && conversionForm.pk_ratio === 6
+                    ? 'bg-[#E4002B] text-white shadow-xs'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
+              >
+                6 PB + 6 PK (12 Potong)
+              </button>
+            </div>
+          </div>
+
+          {/* Form Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Card 1: Goreng Ayam PB */}
+            <div className="bg-white rounded-2xl border border-red-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-red-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-red-100 text-[#E4002B]">
+                      <Flame className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">
+                        Olahan Goreng Ayam PB
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        Paha Bawah / Sayap
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-red-800 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg">
+                    Bagian PB
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3.5">
+                  {/* Potongan per Olahan */}
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>Potongan Siap Jual (pcs) per 1 Olahan:</span>
+                      <span className="text-[#E4002B] font-mono text-sm font-black">{conversionForm.pb_ratio} pcs</span>
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConversionForm(p => ({ ...p, pb_ratio: Math.max(1, (Number(p.pb_ratio) || 0) - 1) }))}
+                        className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all cursor-pointer shrink-0"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={conversionForm.pb_ratio}
+                        onChange={(e) => setConversionForm(p => ({ ...p, pb_ratio: Number(e.target.value) || 0 }))}
+                        className="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setConversionForm(p => ({ ...p, pb_ratio: Math.min(30, (Number(p.pb_ratio) || 0) + 1) }))}
+                        className="w-9 h-9 rounded-xl bg-[#E4002B] hover:bg-[#c40024] text-white font-bold flex items-center justify-center transition-all cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <span className="text-[10.5px] text-slate-500 block mt-1">
+                      Setiap 1 kali goreng olahan PB akan otomatis menambah <strong>{conversionForm.pb_ratio} pcs</strong> stok siap jual PB.
+                    </span>
+                  </div>
+
+                  {/* Bobot Mentah per Olahan */}
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>Bobot Ayam Mentah per 1 Olahan (kg):</span>
+                      <span className="text-slate-800 font-mono text-sm font-black">{conversionForm.pb_kg_weight} kg</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      min={0.1}
+                      max={5}
+                      value={conversionForm.pb_kg_weight}
+                      onChange={(e) => setConversionForm(p => ({ ...p, pb_kg_weight: parseFloat(e.target.value) || 0.5 }))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    />
+                    <span className="text-[10.5px] text-slate-500 block mt-1">
+                      Standar: <strong>0.5 kg</strong> ayam mentah per 1 olahan PB.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 bg-red-50/50 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 p-3 rounded-b-2xl flex items-center justify-between text-[11px] text-red-950 font-bold">
+                <span>Rasio Olahan PB:</span>
+                <span className="text-[#E4002B]">
+                  1 Olahan = {conversionForm.pb_ratio} pcs ({conversionForm.pb_kg_weight} kg)
+                </span>
+              </div>
+            </div>
+
+            {/* Card 2: Goreng Ayam PK */}
+            <div className="bg-white rounded-2xl border border-red-200/80 shadow-xs p-4 sm:p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-red-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-red-100 text-[#E4002B]">
+                      <Flame className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900">
+                        Olahan Goreng Ayam PK
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        Paha Atas / Dada
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-red-800 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg">
+                    Bagian PK
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3.5">
+                  {/* Potongan per Olahan */}
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>Potongan Siap Jual (pcs) per 1 Olahan:</span>
+                      <span className="text-[#E4002B] font-mono text-sm font-black">{conversionForm.pk_ratio} pcs</span>
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConversionForm(p => ({ ...p, pk_ratio: Math.max(1, (Number(p.pk_ratio) || 0) - 1) }))}
+                        className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all cursor-pointer shrink-0"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={conversionForm.pk_ratio}
+                        onChange={(e) => setConversionForm(p => ({ ...p, pk_ratio: Number(e.target.value) || 0 }))}
+                        className="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setConversionForm(p => ({ ...p, pk_ratio: Math.min(30, (Number(p.pk_ratio) || 0) + 1) }))}
+                        className="w-9 h-9 rounded-xl bg-[#E4002B] hover:bg-[#c40024] text-white font-bold flex items-center justify-center transition-all cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <span className="text-[10.5px] text-slate-500 block mt-1">
+                      Setiap 1 kali goreng olahan PK akan otomatis menambah <strong>{conversionForm.pk_ratio} pcs</strong> stok siap jual PK.
+                    </span>
+                  </div>
+
+                  {/* Bobot Mentah per Olahan */}
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>Bobot Ayam Mentah per 1 Olahan (kg):</span>
+                      <span className="text-slate-800 font-mono text-sm font-black">{conversionForm.pk_kg_weight} kg</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      min={0.1}
+                      max={5}
+                      value={conversionForm.pk_kg_weight}
+                      onChange={(e) => setConversionForm(p => ({ ...p, pk_kg_weight: parseFloat(e.target.value) || 0.5 }))}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    />
+                    <span className="text-[10.5px] text-slate-500 block mt-1">
+                      Standar: <strong>0.5 kg</strong> ayam mentah per 1 olahan PK.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 bg-red-50/50 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 p-3 rounded-b-2xl flex items-center justify-between text-[11px] text-red-950 font-bold">
+                <span>Rasio Olahan PK:</span>
+                <span className="text-[#E4002B]">
+                  1 Olahan = {conversionForm.pk_ratio} pcs ({conversionForm.pk_kg_weight} kg)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Konversi Masak Nasi */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                  <span className="text-amber-500">🍚</span> Konversi Masak Nasi (Beras)
+                </h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Berapa porsi nasi siap jual yang dihasilkan dari setiap 1 kg beras dimasak.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-bold text-slate-600">Porsi per 1 kg Beras:</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setConversionForm(p => ({ ...p, masak_nasi_ratio: Math.max(1, (Number(p.masak_nasi_ratio) || 12) - 1) }))}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all cursor-pointer"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={conversionForm.masak_nasi_ratio ?? 12}
+                    onChange={(e) => setConversionForm(p => ({ ...p, masak_nasi_ratio: Number(e.target.value) || 12 }))}
+                    className="w-16 text-center py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setConversionForm(p => ({ ...p, masak_nasi_ratio: Math.min(30, (Number(p.masak_nasi_ratio) || 12) + 1) }))}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <span className="text-xs font-bold text-slate-500">porsi</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Simulation / Live Breakdown Card */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4 sm:p-5 border border-slate-700 shadow-md space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-700/80 pb-2.5">
+              <span className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" /> Simulasi Perhitungan 1 kg Ayam Mentah
+              </span>
+              <span className="text-[10px] text-slate-300 font-bold bg-white/10 px-2 py-0.5 rounded-full">
+                Otomatisasi Sistem
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                <span className="text-[10px] text-slate-400 block font-medium">Bahan Baku Utama</span>
+                <span className="text-lg font-black text-white block mt-0.5">1 kg</span>
+                <span className="text-[10px] text-red-300 font-bold">Ayam Mentah Utuh</span>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                <span className="text-[10px] text-slate-400 block font-medium">Pembagian Dapur</span>
+                <span className="text-lg font-black text-amber-300 block mt-0.5">
+                  {conversionForm.pb_ratio} PB + {conversionForm.pk_ratio} PK
+                </span>
+                <span className="text-[10px] text-slate-300 font-bold">
+                  ({conversionForm.pb_kg_weight} kg PB + {conversionForm.pk_kg_weight} kg PK)
+                </span>
+              </div>
+
+              <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-3 text-center">
+                <span className="text-[10px] text-emerald-300 block font-medium">Total Potongan Siap Jual</span>
+                <span className="text-lg font-black text-emerald-400 block mt-0.5">
+                  {Number(conversionForm.pb_ratio) + Number(conversionForm.pk_ratio)} Potong
+                </span>
+                <span className="text-[10px] text-emerald-300 font-bold">per 1 kg ayam mentah</span>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-300 bg-black/30 p-2.5 rounded-xl border border-white/5 leading-relaxed">
+              💡 <strong>Alur Otomatis di Form Operasional:</strong> Saat staf memasukkan <em>Goreng Ayam PB: 1</em>, sistem otomatis mengisi <strong>+{conversionForm.pb_ratio} pcs</strong> stok siap jual PB dan mengurangi <strong>{conversionForm.pb_kg_weight} kg</strong> ayam mentah. Demikian juga dengan PK bertambah <strong>+{conversionForm.pk_ratio} pcs</strong> dan mengurangi <strong>{conversionForm.pk_kg_weight} kg</strong> ayam mentah.
+            </div>
+          </div>
+
+          {/* Action Footer Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
+            <button
+              type="button"
+              onClick={() => handleResetConversionToDefault(5, 4)}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset ke Standar (5 PB + 4 PK)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSaveConversion()}
+              disabled={savingConversion}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#E4002B] hover:bg-[#c40024] disabled:opacity-50 text-white text-xs font-black flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            >
+              {savingConversion ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Simpan Pengaturan Konversi</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* SUB-VIEW 9: KEAMANAN & UBAH PIN ADMIN               */}
       {/* ---------------------------------------------------- */}
       {activeSubTab === 'security' && (
         <div className="max-w-xl mx-auto bg-white rounded-3xl border border-slate-200/90 shadow-md overflow-hidden">
@@ -1577,6 +2475,7 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
               <div>
                 <h3 className="text-base font-extrabold text-white">
                   {modalMode === 'create' ? 'Tambah ' : 'Edit '}
+                  {activeSubTab === 'barang' && 'Data Barang'}
                   {activeSubTab === 'outlets' && 'Outlet'}
                   {activeSubTab === 'stock' && 'Item Stok Awal'}
                   {activeSubTab === 'tosser_in' && 'Item Tosser In'}
@@ -1598,6 +2497,75 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
 
             {/* Modal Body */}
             <div className="p-5 space-y-4">
+              {/* Master Barang Form */}
+              {activeSubTab === 'barang' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Nama Barang <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={barangForm.name}
+                      onChange={(e) => setBarangForm({ ...barangForm, name: e.target.value })}
+                      placeholder="Contoh: Ayam PB, Beras, Minyak Goreng"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Kode Barang</label>
+                      <input
+                        type="text"
+                        value={barangForm.code}
+                        onChange={(e) => setBarangForm({ ...barangForm, code: e.target.value })}
+                        placeholder="Contoh: BRG-PB"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Satuan <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={barangForm.unit}
+                        onChange={(e) => setBarangForm({ ...barangForm, unit: e.target.value })}
+                        placeholder="pcs, kg, porsi, cup"
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Kategori Barang</label>
+                    <select
+                      value={barangForm.category}
+                      onChange={(e) =>
+                        setBarangForm({
+                          ...barangForm,
+                          category: e.target.value as 'raw' | 'ready' | 'other',
+                        })
+                      }
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    >
+                      <option value="ready">🍗 Barang Siap Jual (Goreng Ayam PB, PK, Nasi, Sambal)</option>
+                      <option value="raw">📦 Bahan Mentah / Dapur (Ayam Mentah, Beras, Kulit Mentah)</option>
+                      <option value="other">🛠️ Lainnya / Logistik</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Keterangan / Catatan</label>
+                    <input
+                      type="text"
+                      value={barangForm.description}
+                      onChange={(e) => setBarangForm({ ...barangForm, description: e.target.value })}
+                      placeholder="Catatan tambahan spesifikasi barang"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    />
+                  </div>
+                </>
+              )}
+
               {/* Outlet Form */}
               {activeSubTab === 'outlets' && (
                 <>
@@ -1725,6 +2693,31 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                       Komposisi paket (seperti "1 pk + 1 nasi") akan digunakan untuk kalkulasi otomatis pengurangan sisa stok.
                     </p>
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Relasi ke Data Barang (ID Barang) <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={productForm.barang_id ?? ''}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          barang_id: e.target.value ? Number(e.target.value) : '',
+                        })
+                      }
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    >
+                      <option value="">-- Pilih Barang Terkait --</option>
+                      {masterBarang.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          [ID #{b.id}] {b.name} ({b.unit}) {b.code ? `[${b.code}]` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Data penjualan menu ini akan terhubung ke ID barang yang dipilih. Relasi tetap aman meski nama barang diubah.
+                    </p>
+                  </div>
                 </>
               )}
 
@@ -1769,6 +2762,31 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                       </input>
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Relasi ke Data Barang (ID Barang) <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={stockForm.barang_id ?? ''}
+                      onChange={(e) =>
+                        setStockForm({
+                          ...stockForm,
+                          barang_id: e.target.value ? Number(e.target.value) : '',
+                        })
+                      }
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    >
+                      <option value="">-- Pilih Barang Terkait --</option>
+                      {masterBarang.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          [ID #{b.id}] {b.name} ({b.unit}) {b.code ? `[${b.code}]` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Stok awal akan terhubung langsung ke ID barang yang dipilih.
+                    </p>
+                  </div>
                 </>
               )}
 
@@ -1812,6 +2830,31 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                         className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold"
                       />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Relasi ke Data Barang (ID Barang) <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={tosserForm.barang_id ?? ''}
+                      onChange={(e) =>
+                        setTosserForm({
+                          ...tosserForm,
+                          barang_id: e.target.value ? Number(e.target.value) : '',
+                        })
+                      }
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
+                    >
+                      <option value="">-- Pilih Barang Terkait --</option>
+                      {masterBarang.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          [ID #{b.id}] {b.name} ({b.unit}) {b.code ? `[${b.code}]` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Contoh: Tosser "PB" terhubung ke ID Barang Ayam PB. Jika nama barang diedit, transaksi tetap terhubung.
+                    </p>
                   </div>
                 </>
               )}
@@ -1917,7 +2960,8 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
                 type="button"
                 id="btn-save-master-item"
                 onClick={() => {
-                  if (activeSubTab === 'outlets') handleSaveOutlet();
+                  if (activeSubTab === 'barang') handleSaveBarang();
+                  else if (activeSubTab === 'outlets') handleSaveOutlet();
                   else if (activeSubTab === 'sales') handleSaveProduct();
                   else if (activeSubTab === 'stock') handleSaveStockItem();
                   else if (activeSubTab === 'tosser_in' || activeSubTab === 'tosser_out')

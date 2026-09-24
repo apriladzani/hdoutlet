@@ -10,13 +10,15 @@ import {
   ArrowUpFromLine,
   RefreshCw,
 } from 'lucide-react';
-import { StockData, TosserData } from '../types.ts';
+import { ChickenConversionConfig, StockData, StockMasterItem, TosserData, TosserMasterItem } from '../types.ts';
 import {
   parseStockQuantity,
   calculateChickenBatch,
   calculateRiceBatch,
   calculateChickenTotalCookKg,
   calculateChickenRemainingDetail,
+  AYAM_PB_KG_WEIGHT,
+  AYAM_PK_KG_WEIGHT,
   GORENG_AYAM_PB_RATIO,
   GORENG_AYAM_PK_RATIO,
   MASAK_NASI_RATIO,
@@ -27,11 +29,14 @@ import {
 interface StockSectionProps {
   stock: StockData;
   setStock: React.Dispatch<React.SetStateAction<StockData>>;
+  conversion?: ChickenConversionConfig;
+  stockItems?: StockMasterItem[];
+  tosserItems?: TosserMasterItem[];
 }
 
 interface SellableProductConfig {
-  key: keyof StockData;
-  tosserKey: keyof TosserData;
+  key: string;
+  tosserKey: string;
   label: string;
   placeholder: string;
   unit: string;
@@ -48,13 +53,61 @@ const SELLABLE_PRODUCTS: SellableProductConfig[] = [
   { key: 's_geprek', tosserKey: 's_geprek', label: 'S. Geprek', placeholder: '0', unit: 'pcs', offlineProductName: 'Geprek' },
 ];
 
-export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) => {
-  const handleStockChange = (key: keyof StockData, value: string) => {
+export const StockSection: React.FC<StockSectionProps> = ({
+  stock,
+  setStock,
+  conversion,
+  stockItems,
+  tosserItems,
+}) => {
+  const pbRatio = conversion?.pb_ratio ?? GORENG_AYAM_PB_RATIO;
+  const pkRatio = conversion?.pk_ratio ?? GORENG_AYAM_PK_RATIO;
+  const pbWeight = conversion?.pb_kg_weight ?? AYAM_PB_KG_WEIGHT;
+  const pkWeight = conversion?.pk_kg_weight ?? AYAM_PK_KG_WEIGHT;
+  const riceRatio = conversion?.masak_nasi_ratio ?? MASAK_NASI_RATIO;
+
+  const STANDARD_RAW_KEYS = ['ayam_mentah', 'masak_ayam_pb', 'masak_ayam_pk', 'kulit_mentah', 'masak_kulit_ck', 'beras', 'masak_nasi', 'goreng_ayam'];
+  const customRawItems = (stockItems || []).filter((s) => s.active !== false && s.category === 'raw' && !STANDARD_RAW_KEYS.includes(s.key));
+
+  const activeTosserInList = (tosserItems && tosserItems.length > 0)
+    ? tosserItems.filter((t) => t.active !== false && (t.type === 'in' || t.type === 'both'))
+    : TOSSER_PRODUCTS.map((p) => ({
+        id: 0,
+        key: p.key as string,
+        name: p.label,
+        unit: p.unit,
+        type: 'in' as const,
+        active: true,
+      }));
+
+  const activeTosserOutList = (tosserItems && tosserItems.length > 0)
+    ? tosserItems.filter((t) => t.active !== false && (t.type === 'out' || t.type === 'both'))
+    : TOSSER_PRODUCTS.map((p) => ({
+        id: 0,
+        key: p.key as string,
+        name: p.label,
+        unit: p.unit,
+        type: 'out' as const,
+        active: true,
+      }));
+
+  const activeReadyList = (stockItems && stockItems.length > 0)
+    ? stockItems.filter((s) => s.active !== false && s.category === 'ready')
+    : SELLABLE_PRODUCTS.map((p) => ({
+        id: 0,
+        key: p.key as string,
+        name: p.label,
+        category: 'ready' as const,
+        unit: p.unit,
+        active: true,
+      }));
+
+  const handleStockChange = (key: string, value: string) => {
     setStock((prev) => ({ ...prev, [key]: value }));
   };
 
   // Tosser In Handler
-  const handleTosserInChange = (key: keyof TosserData, value: string) => {
+  const handleTosserInChange = (key: string, value: string) => {
     setStock((prev) => ({
       ...prev,
       tosser_in: {
@@ -64,14 +117,14 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
     }));
   };
 
-  const handleStepTosserIn = (key: keyof TosserData, delta: number) => {
+  const handleStepTosserIn = (key: string, delta: number) => {
     const current = parseStockQuantity(stock.tosser_in?.[key]) || 0;
     const nextVal = Math.max(0, current + delta);
     handleTosserInChange(key, nextVal > 0 ? nextVal.toString() : '');
   };
 
   // Tosser Out Handler
-  const handleTosserOutChange = (key: keyof TosserData, value: string) => {
+  const handleTosserOutChange = (key: string, value: string) => {
     setStock((prev) => ({
       ...prev,
       tosser_out: {
@@ -81,20 +134,20 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
     }));
   };
 
-  const handleStepTosserOut = (key: keyof TosserData, delta: number) => {
+  const handleStepTosserOut = (key: string, delta: number) => {
     const current = parseStockQuantity(stock.tosser_out?.[key]) || 0;
     const nextVal = Math.max(0, current + delta);
     handleTosserOutChange(key, nextVal > 0 ? nextVal.toString() : '');
   };
 
   // Handlers for Goreng Ayam PB and PK:
-  // 1 Goreng Ayam PB -> 0.5 kg ayam mentah -> auto input PB = count * 5
-  // 1 Goreng Ayam PK -> 0.5 kg ayam mentah -> auto input PK = count * 4
+  // 1 Goreng Ayam PB -> auto input PB = count * pbRatio
+  // 1 Goreng Ayam PK -> auto input PK = count * pkRatio
   const handleGorengAyamPbChange = (value: string) => {
     const count = parseStockQuantity(value);
     setStock((prev) => {
       const nextStock = { ...prev, masak_ayam_pb: value };
-      const pbPcs = count !== null && count > 0 ? count * 5 : 0;
+      const pbPcs = count !== null && count > 0 ? count * pbRatio : 0;
       const tosserInPb = parseStockQuantity(prev.tosser_in?.goreng_ayam_pb) || 0;
       const tosserOutPb = parseStockQuantity(prev.tosser_out?.goreng_ayam_pb) || 0;
       const netPb = pbPcs + tosserInPb - tosserOutPb;
@@ -113,7 +166,7 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
     const count = parseStockQuantity(value);
     setStock((prev) => {
       const nextStock = { ...prev, masak_ayam_pk: value };
-      const pkPcs = count !== null && count > 0 ? count * 4 : 0;
+      const pkPcs = count !== null && count > 0 ? count * pkRatio : 0;
       const tosserInPk = parseStockQuantity(prev.tosser_in?.goreng_ayam_pk) || 0;
       const tosserOutPk = parseStockQuantity(prev.tosser_out?.goreng_ayam_pk) || 0;
       const netPk = pkPcs + tosserInPk - tosserOutPk;
@@ -129,7 +182,7 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
   };
 
   // Handler for Masak Nasi:
-  // 1 kg masak nasi -> auto input nasi = kg * 12 porsi
+  // Masak Nasi -> auto input nasi = kg * riceRatio
   const handleMasakNasiChange = (value: string) => {
     const kg = parseStockQuantity(value);
     setStock((prev) => {
@@ -138,7 +191,7 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
       const tosserOutNasi = parseStockQuantity(prev.tosser_out?.nasi) || 0;
 
       if (kg !== null && kg > 0) {
-        const porsi = calculateRiceBatch(kg);
+        const porsi = calculateRiceBatch(kg, conversion);
         nextStock.nasi = Math.max(0, porsi + tosserInNasi - tosserOutNasi).toString();
       } else if (value.trim() === '' || kg === 0) {
         const netNasi = tosserInNasi - tosserOutNasi;
@@ -190,13 +243,13 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
       const kulitCkCook = parseStockQuantity(prev.masak_kulit_ck) || 0;
 
       const pbFromDapur = (pbCookCount !== null || pkCookCount !== null)
-        ? (pbCookCount || 0) * 5
-        : legacyGoreng * 5;
+        ? (pbCookCount || 0) * pbRatio
+        : legacyGoreng * pbRatio;
       const pkFromDapur = (pbCookCount !== null || pkCookCount !== null)
-        ? (pkCookCount || 0) * 4
-        : legacyGoreng * 4;
+        ? (pkCookCount || 0) * pkRatio
+        : legacyGoreng * pkRatio;
 
-      const riceBatch = calculateRiceBatch(masakKg);
+      const riceBatch = calculateRiceBatch(masakKg, conversion);
 
       const inData = prev.tosser_in || EMPTY_TOSSER_DATA;
       const outData = prev.tosser_out || EMPTY_TOSSER_DATA;
@@ -225,15 +278,28 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
         nextStock.s_geprek = calcGeprek > 0 ? calcGeprek.toString() : '';
       }
 
+      // Sync custom ready items with Tosser In - Tosser Out if present
+      const standardKeys = ['goreng_ayam_pb', 'goreng_ayam_pk', 'goreng_kulit', 'goreng_kulit_ck', 'nasi', 's_chili_oil', 's_geprek'];
+      for (const p of activeReadyList) {
+        if (!standardKeys.includes(p.key)) {
+          const inVal = parseStockQuantity(inData[p.key]) || 0;
+          const outVal = parseStockQuantity(outData[p.key]) || 0;
+          if (inVal > 0 || outVal > 0) {
+            const net = inVal - outVal;
+            nextStock[p.key] = net > 0 ? net.toString() : '';
+          }
+        }
+      }
+
       return nextStock;
     });
   };
 
   const pbCookCount = parseStockQuantity(stock.masak_ayam_pb) || 0;
   const pkCookCount = parseStockQuantity(stock.masak_ayam_pk) || 0;
-  const totalAyamCookKg = calculateChickenTotalCookKg(pbCookCount, pkCookCount);
+  const totalAyamCookKg = calculateChickenTotalCookKg(pbCookCount, pkCookCount, conversion);
   const rawAyamInitial = parseStockQuantity(stock.ayam_mentah);
-  const chickenDetail = calculateChickenRemainingDetail(rawAyamInitial, pbCookCount, pkCookCount);
+  const chickenDetail = calculateChickenRemainingDetail(rawAyamInitial, pbCookCount, pkCookCount, conversion);
   const legacyGorengCount = parseStockQuantity(stock.goreng_ayam) || 0;
   const masakNasiKg = parseStockQuantity(stock.masak_nasi) || 0;
   const masakKulitCkPcs = parseStockQuantity(stock.masak_kulit_ck) || 0;
@@ -309,7 +375,7 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                     Olahan Dapur (Goreng Ayam)
                   </span>
                   <span className="text-[10px] font-bold text-red-800 bg-red-100/80 px-1.5 py-0.5 rounded">
-                    5 PB = 0.5 kg • 4 PK = 0.5 kg
+                    {pbRatio} PB = {pbWeight} kg • {pkRatio} PK = {pkWeight} kg
                   </span>
                 </div>
 
@@ -357,10 +423,10 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                     </div>
 
                     <div className="mt-1 flex items-center justify-between text-[9.5px]">
-                      <span className="text-slate-400">1 = 0.5 kg (5 PB)</span>
+                      <span className="text-slate-400">1 = {pbWeight} kg ({pbRatio} PB)</span>
                       {pbCookCount > 0 && (
                         <span className="font-bold text-emerald-700 bg-emerald-50 px-1 rounded border border-emerald-200/60">
-                          +{pbCookCount * 5} pcs ({pbCookCount * 0.5} kg)
+                          +{pbCookCount * pbRatio} pcs ({Math.round(pbCookCount * pbWeight * 100) / 100} kg)
                         </span>
                       )}
                     </div>
@@ -409,10 +475,10 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                     </div>
 
                     <div className="mt-1 flex items-center justify-between text-[9.5px]">
-                      <span className="text-slate-400">1 = 0.5 kg (4 PK)</span>
+                      <span className="text-slate-400">1 = {pkWeight} kg ({pkRatio} PK)</span>
                       {pkCookCount > 0 && (
                         <span className="font-bold text-emerald-700 bg-emerald-50 px-1 rounded border border-emerald-200/60">
-                          +{pkCookCount * 4} pcs ({pkCookCount * 0.5} kg)
+                          +{pkCookCount * pkRatio} pcs ({Math.round(pkCookCount * pkWeight * 100) / 100} kg)
                         </span>
                       )}
                     </div>
@@ -518,11 +584,10 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                           key={presetKg}
                           type="button"
                           onClick={() => handleMasakNasiChange(presetKg.toString())}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                            isSelected
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${isSelected
                               ? 'bg-[#E4002B] text-white shadow-xs'
                               : 'bg-white text-red-900 border border-red-200/80 hover:bg-red-100'
-                          }`}
+                            }`}
                           title={`Set nyangu ${presetKg} kg (${presetKg * 12} pcs)`}
                         >
                           {presetKg} kg
@@ -622,11 +687,10 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                           key={presetPcs}
                           type="button"
                           onClick={() => handleMasakKulitCkChange(presetPcs.toString())}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                            isSelected
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${isSelected
                               ? 'bg-[#E4002B] text-white shadow-xs'
                               : 'bg-white text-red-900 border border-red-200/80 hover:bg-red-100'
-                          }`}
+                            }`}
                           title={`Set Masak Kulit CK ${presetPcs} pcs`}
                         >
                           {presetPcs} pcs
@@ -646,6 +710,53 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                 </div>
               </div>
             </div>
+
+            {/* Item Bahan Baku Tambahan dari Kelola Data */}
+            {customRawItems.length > 0 && (
+              <div className="sm:col-span-2 lg:col-span-3 mt-1 pt-3 border-t border-dashed border-red-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                    Item Bahan Baku Tambahan ({customRawItems.length})
+                  </span>
+                  <span className="text-[10px] text-slate-400">Dari Kelola Data</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {customRawItems.map((item) => {
+                    const currentVal = stock[item.key] || '';
+                    return (
+                      <div
+                        key={`custom-raw-${item.key}`}
+                        className="bg-red-50/30 p-3 rounded-xl border border-red-200/60 flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label
+                              htmlFor={`stock-input-${item.key}`}
+                              className="text-xs font-bold text-slate-800 truncate mr-1"
+                              title={item.name}
+                            >
+                              {item.name}
+                            </label>
+                            <span className="text-[10px] font-semibold text-red-800 bg-red-100/70 px-1.5 py-0.5 rounded">
+                              {item.unit}
+                            </span>
+                          </div>
+                          <input
+                            id={`stock-input-${item.key}`}
+                            type="text"
+                            inputMode="decimal"
+                            value={currentVal}
+                            onChange={(e) => handleStockChange(item.key, e.target.value)}
+                            placeholder={item.default_value || '0'}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-hidden focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B] transition-all"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -666,12 +777,12 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
               </div>
             </div>
             <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-              7 Menu
+              {activeTosserInList.length} Menu
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-            {TOSSER_PRODUCTS.map((item) => {
+            {activeTosserInList.map((item) => {
               const currentVal = stock.tosser_in?.[item.key] || '';
               return (
                 <div
@@ -679,8 +790,8 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                   className="bg-white p-2 rounded-lg border border-emerald-200 shadow-2xs flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-bold text-slate-800 truncate" title={item.label}>
-                      {item.label}
+                    <span className="text-[11px] font-bold text-slate-800 truncate" title={item.name}>
+                      {item.name}
                     </span>
                     <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-100">
                       {item.unit}
@@ -735,12 +846,12 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
               </div>
             </div>
             <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full">
-              7 Menu
+              {activeTosserOutList.length} Menu
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-            {TOSSER_PRODUCTS.map((item) => {
+            {activeTosserOutList.map((item) => {
               const currentVal = stock.tosser_out?.[item.key] || '';
               return (
                 <div
@@ -748,8 +859,8 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                   className="bg-white p-2 rounded-lg border border-rose-200 shadow-2xs flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-bold text-slate-800 truncate" title={item.label}>
-                      {item.label}
+                    <span className="text-[11px] font-bold text-slate-800 truncate" title={item.name}>
+                      {item.name}
                     </span>
                     <span className="text-[9px] font-semibold text-rose-700 bg-rose-50 px-1 py-0.2 rounded border border-rose-100">
                       {item.unit}
@@ -810,21 +921,21 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-            {SELLABLE_PRODUCTS.map((product) => {
-              const inVal = parseStockQuantity(stock.tosser_in?.[product.tosserKey]) || 0;
-              const outVal = parseStockQuantity(stock.tosser_out?.[product.tosserKey]) || 0;
+            {activeReadyList.map((product) => {
+              const inVal = parseStockQuantity(stock.tosser_in?.[product.key]) || 0;
+              const outVal = parseStockQuantity(stock.tosser_out?.[product.key]) || 0;
 
               let kitchenExtra = 0;
               if (product.key === 'goreng_ayam_pb') {
                 kitchenExtra = (stock.masak_ayam_pb !== undefined || stock.masak_ayam_pk !== undefined)
-                  ? pbCookCount * 5
-                  : legacyGorengCount * GORENG_AYAM_PB_RATIO;
+                  ? pbCookCount * pbRatio
+                  : legacyGorengCount * pbRatio;
               } else if (product.key === 'goreng_ayam_pk') {
                 kitchenExtra = (stock.masak_ayam_pb !== undefined || stock.masak_ayam_pk !== undefined)
-                  ? pkCookCount * 4
-                  : legacyGorengCount * GORENG_AYAM_PK_RATIO;
+                  ? pkCookCount * pkRatio
+                  : legacyGorengCount * pkRatio;
               } else if (product.key === 'nasi') {
-                kitchenExtra = masakNasiKg * MASAK_NASI_RATIO;
+                kitchenExtra = masakNasiKg * riceRatio;
               } else if (product.key === 'goreng_kulit_ck') {
                 kitchenExtra = masakKulitCkPcs;
               }
@@ -834,16 +945,17 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
               return (
                 <div
                   key={`stock-sell-${product.key}`}
-                  className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70 hover:border-slate-300 transition-all"
+                  className="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/70 hover:border-slate-300 transition-all flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <label
                       htmlFor={`stock-input-${product.key}`}
-                      className="text-xs font-bold text-slate-700"
+                      className="text-xs font-bold text-slate-700 truncate mr-1"
+                      title={product.name}
                     >
-                      {product.label}
+                      {product.name}
                     </label>
-                    <span className="text-[10px] font-medium text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                    <span className="text-[10px] font-medium text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
                       {product.unit}
                     </span>
                   </div>
@@ -854,18 +966,17 @@ export const StockSection: React.FC<StockSectionProps> = ({ stock, setStock }) =
                     inputMode="numeric"
                     value={stock[product.key] || ''}
                     onChange={(e) => handleStockChange(product.key, e.target.value)}
-                    placeholder={product.placeholder}
-                    className={`w-full bg-white border rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-hidden focus:ring-2 transition-all ${
-                      isAutoFilled
+                    placeholder="0"
+                    className={`w-full bg-white border rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-800 placeholder-slate-300 focus:outline-hidden focus:ring-2 transition-all ${isAutoFilled
                         ? 'border-red-300 ring-1 ring-red-400/30 focus:ring-[#E4002B]/30 focus:border-[#E4002B]'
                         : 'border-slate-200 focus:ring-[#E4002B]/20 focus:border-[#E4002B]'
-                    }`}
+                      }`}
                   />
 
                   {/* Breakdown Indicator */}
                   <div className="mt-1 flex items-center justify-between text-[10px]">
                     <span className="text-slate-500">
-                      Jual: {product.offlineProductName}
+                      Siap Jual
                     </span>
 
                     <div className="flex items-center gap-1 font-semibold">
