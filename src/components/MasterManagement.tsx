@@ -611,6 +611,8 @@ Data transaksi akan tetap ada, tetapi relasi barang ini akan terputus.`;
         }));
       } else if (item.barang_id) {
         initialIngredients = [{ barang_id: item.barang_id, qty: 1 }];
+      } else if (item.name && (item.name.toLowerCase().includes('mineral') || item.name.toLowerCase().includes('air mineral'))) {
+        initialIngredients = [{ barang_id: 11, qty: 1 }];
       } else if (item.items_composition) {
         const comp = item.items_composition;
         if (comp.pb) initialIngredients.push({ barang_id: 1, qty: comp.pb });

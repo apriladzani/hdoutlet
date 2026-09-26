@@ -5,6 +5,7 @@ import {
   PRODUCT_STOCK_MAPPINGS,
   parseStockQuantity,
   calculateAllRemainingStock,
+  calculateSoldUnitsFromSales,
   calculateRawMaterialsRemaining,
 } from '../utils/stockCalculations.ts';
 
@@ -36,7 +37,7 @@ export const RemainingStockSection: React.FC<RemainingStockSectionProps> = ({
   const standardRawKeys = ['ayam_mentah', 'masak_ayam_pb', 'masak_ayam_pk', 'kulit_mentah', 'masak_kulit_ck', 'beras', 'masak_nasi', 'goreng_ayam'];
   const customRawItems = (stockItems || []).filter((s) => s.active !== false && s.category === 'raw' && !standardRawKeys.includes(s.key));
 
-  const standardSellKeys = ['goreng_ayam_pb', 'goreng_ayam_pk', 'goreng_kulit', 'goreng_kulit_ck', 'nasi', 's_chili_oil', 's_geprek'];
+  const standardSellKeys = ['goreng_ayam_pb', 'goreng_ayam_pk', 'goreng_kulit', 'goreng_kulit_ck', 'nasi', 's_chili_oil', 's_geprek', 'mineral_water'];
   const customReadyItems = (stockItems || []).filter((s) => s.active !== false && s.category === 'ready' && !standardSellKeys.includes(s.key));
 
   // Calculation status for ready-to-sell products
@@ -390,10 +391,11 @@ export const RemainingStockSection: React.FC<RemainingStockSectionProps> = ({
 
             {/* Custom Ready Items from Kelola Data */}
             {customReadyItems.map((item) => {
+              const soldUnits = calculateSoldUnitsFromSales(sales);
               const matchingSale = sales.find(
                 (s) => s.product_name.toLowerCase() === item.name.toLowerCase() || (item.barang_id && (s as any).barang_id === item.barang_id)
               );
-              const soldQty = matchingSale ? Number(matchingSale.quantity) || 0 : 0;
+              const soldQty = soldUnits[item.key] || (matchingSale ? Number(matchingSale.quantity) || 0 : 0);
               const stockVal = stock[item.key];
               const stockNum = parseStockQuantity(stockVal);
               const calcRem = stockNum !== null ? Math.max(0, stockNum - soldQty) : null;

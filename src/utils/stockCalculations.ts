@@ -35,7 +35,9 @@ export type SellableStockKey =
   | 'goreng_kulit_ck'
   | 'nasi'
   | 's_chili_oil'
-  | 's_geprek';
+  | 's_geprek'
+  | 'mineral_water'
+  | (string & {});
 
 export interface ProductStockMapping {
   productId: number;
@@ -55,6 +57,7 @@ export const PRODUCT_STOCK_MAPPINGS: ProductStockMapping[] = [
   { productId: 4, productName: 'Nasi', stockKey: 'nasi', label: 'Nasi', unit: 'pcs' },
   { productId: 5, productName: 'Chili Oil', stockKey: 's_chili_oil', label: 'S. Chili Oil', unit: 'pcs' },
   { productId: 6, productName: 'Geprek', stockKey: 's_geprek', label: 'S. Geprek', unit: 'pcs' },
+  { productId: 113, productName: 'Mineral Water', stockKey: 'mineral_water', label: 'Mineral Water', unit: 'pcs' },
 ];
 
 export const RAW_MATERIAL_KEYS: Array<{ key: keyof StockData; label: string; unit: string }> = [
@@ -338,14 +341,33 @@ export function mapBarangIdToStockKey(
 ): { stockKey: SellableStockKey; label: string; shortLabel: string; unit: string } | null {
   if (barangId === 1) return { stockKey: 'goreng_ayam_pb', label: 'Ayam PB', shortLabel: 'PB', unit: 'pcs' };
   if (barangId === 2) return { stockKey: 'goreng_ayam_pk', label: 'Ayam PK', shortLabel: 'PK', unit: 'pcs' };
+  if (barangId === 3) return { stockKey: 'ayam_mentah', label: 'Ayam Mentah', shortLabel: 'Ayam Mentah', unit: 'kg' };
   if (barangId === 4) return { stockKey: 'goreng_kulit', label: 'Kulit', shortLabel: 'Kulit', unit: 'pcs' };
   if (barangId === 5) return { stockKey: 'goreng_kulit_ck', label: 'Kulit CK', shortLabel: 'Kulit CK', unit: 'pcs' };
+  if (barangId === 6) return { stockKey: 'kulit_mentah', label: 'Kulit Mentah', shortLabel: 'Kulit Mentah', unit: 'kg' };
   if (barangId === 7) return { stockKey: 'nasi', label: 'Nasi', shortLabel: 'Nasi', unit: 'porsi' };
+  if (barangId === 8) return { stockKey: 'beras', label: 'Beras', shortLabel: 'Beras', unit: 'kg' };
   if (barangId === 9) return { stockKey: 's_chili_oil', label: 'Chili Oil', shortLabel: 'Chili Oil', unit: 'cup' };
   if (barangId === 10) return { stockKey: 's_geprek', label: 'Geprek', shortLabel: 'Geprek', unit: 'cup' };
+  if (barangId === 11) return { stockKey: 'mineral_water', label: 'Mineral Water', shortLabel: 'Mineral Water', unit: 'pcs' };
+
+  // Support arbitrary dynamic barang_id
+  if (typeof barangId === 'number' && !isNaN(barangId) && barangId > 0) {
+    const rawLabel = barangName || `Barang #${barangId}`;
+    const cleanKey = (barangName || `barang_${barangId}`).toLowerCase().replace(/[^a-z0-9_]/gi, '_').replace(/^_+|_+$/g, '') || `barang_${barangId}`;
+    return {
+      stockKey: cleanKey,
+      label: rawLabel,
+      shortLabel: rawLabel,
+      unit: 'pcs',
+    };
+  }
 
   if (barangName) {
     const n = barangName.toLowerCase();
+    if (n.includes('mineral') || n.includes('air mineral')) {
+      return { stockKey: 'mineral_water', label: 'Mineral Water', shortLabel: 'Mineral Water', unit: 'pcs' };
+    }
     if (n.includes('pb') || (n.includes('ayam') && (n.includes('besar') || n.includes('dada') || n.includes('paha atas')))) {
       return { stockKey: 'goreng_ayam_pb', label: 'Ayam PB', shortLabel: 'PB', unit: 'pcs' };
     }
@@ -395,42 +417,72 @@ export function getProductRequirements(item: {
   const nameNorm = name.replace(/\s+/g, '');
   const id = item.product_id;
 
-  // 1. One-to-Many Multi-Ingredient System (Highest Priority)
+  // 1. One-to-Many Multi-Ingredient System (HIGHEST PRIORITY)
   // Format: Nama Bahan / ID Bahan + Qty Pemakaian
   // Stok Berkurang = Qty Sales * Qty Pemakaian Bahan
   const ingredients: ProductIngredient[] = (item as any).ingredients || [];
   if (Array.isArray(ingredients) && ingredients.length > 0) {
-    const reqs: PackageComponentRequirement[] = [];
-    for (const ing of ingredients) {
-      const bId = Number(ing.barang_id);
-      const qty = Math.max(1, Number(ing.qty) || 1);
-      const mapped = mapBarangIdToStockKey(bId, ing.name);
-      if (mapped) {
-        reqs.push({
-          stockKey: mapped.stockKey,
-          label: mapped.label,
-          shortLabel: mapped.shortLabel,
-          unit: mapped.unit,
-          qtyPerPackage: qty,
-        });
-      }
-    }
-    if (reqs.length > 0) {
-      // Consolidate if the same stockKey was added multiple times (sum quantities to avoid duplicate subtractions)
-      const consolidatedMap = new Map<SellableStockKey, PackageComponentRequirement>();
-      for (const r of reqs) {
-        const existing = consolidatedMap.get(r.stockKey);
-        if (existing) {
-          existing.qtyPerPackage += r.qtyPerPackage;
-        } else {
-          consolidatedMap.set(r.stockKey, { ...r });
+    const validIngredients = ingredients.filter((ing) => ing && Number(ing.barang_id) > 0);
+    if (validIngredients.length > 0) {
+      const reqs: PackageComponentRequirement[] = [];
+      for (const ing of validIngredients) {
+        const bId = Number(ing.barang_id);
+        const qty = Math.max(1, Number(ing.qty) || 1);
+        const mapped = mapBarangIdToStockKey(bId, ing.name);
+        if (mapped) {
+          reqs.push({
+            stockKey: mapped.stockKey,
+            label: mapped.label,
+            shortLabel: mapped.shortLabel,
+            unit: mapped.unit,
+            qtyPerPackage: qty,
+          });
         }
       }
-      return Array.from(consolidatedMap.values());
+      if (reqs.length > 0) {
+        // Consolidate if the same stockKey was added multiple times (sum quantities to avoid duplicate subtractions)
+        const consolidatedMap = new Map<SellableStockKey, PackageComponentRequirement>();
+        for (const r of reqs) {
+          const existing = consolidatedMap.get(r.stockKey);
+          if (existing) {
+            existing.qtyPerPackage += r.qtyPerPackage;
+          } else {
+            consolidatedMap.set(r.stockKey, { ...r });
+          }
+        }
+        return Array.from(consolidatedMap.values());
+      }
     }
   }
 
-  // 2. If explicit items_composition is provided (Backward Compatibility)
+  // 2. Single barang_id relation (PRIORITY 2: Takes precedence over items_composition!)
+  // If product has a direct barang_id link, resolve it directly via barang_id!
+  const barangId = Number((item as any).barang_id);
+  if (!isNaN(barangId) && barangId > 0) {
+    const singleMapped = mapBarangIdToStockKey(barangId, name);
+    if (singleMapped) {
+      return [{
+        stockKey: singleMapped.stockKey,
+        label: singleMapped.label,
+        shortLabel: singleMapped.shortLabel,
+        unit: singleMapped.unit,
+        qtyPerPackage: 1,
+      }];
+    }
+  }
+
+  // Special case: Mineral Water / Air Mineral (prevents legacy { kulit: 1 } leak when barang_id is 11)
+  if (id === 113 || name.includes('mineral') || name.includes('air mineral')) {
+    return [{
+      stockKey: 'mineral_water',
+      label: 'Mineral Water',
+      shortLabel: 'Mineral Water',
+      unit: 'pcs',
+      qtyPerPackage: 1,
+    }];
+  }
+
+  // 3. Fallback: items_composition ONLY if neither ingredients nor barang_id was defined
   if (item.items_composition && Object.keys(item.items_composition).length > 0) {
     const reqs: PackageComponentRequirement[] = [];
     if (item.items_composition.pb) {
@@ -481,14 +533,7 @@ export function getProductRequirements(item: {
     if (reqs.length > 0) return reqs;
   }
 
-  // 3. Check single barang_id relation if present
-  const barangId = (item as any).barang_id;
-  const singleMapped = mapBarangIdToStockKey(barangId, name);
-  if (singleMapped) {
-    return [{ stockKey: singleMapped.stockKey, label: singleMapped.label, shortLabel: singleMapped.shortLabel, unit: singleMapped.unit, qtyPerPackage: 1 }];
-  }
-
-  // 2. Traditional single items
+  // 4. Traditional single items fallback
   if (id === 1 || name === 'ayam pb') {
     return [{ stockKey: 'goreng_ayam_pb', label: 'Ayam PB', shortLabel: 'PB', unit: 'pcs', qtyPerPackage: 1 }];
   }
@@ -756,8 +801,11 @@ export function getProductStockSummary(
 /**
  * Computes consumed stock units from both Traditional & Modern package sales
  */
-export function calculateSoldUnitsFromSales(sales: SaleItem[]): Record<SellableStockKey, number> {
-  const units: Record<SellableStockKey, number> = {
+/**
+ * Computes consumed stock units from both Traditional & Modern package sales
+ */
+export function calculateSoldUnitsFromSales(sales: SaleItem[]): Record<string, number> {
+  const units: Record<string, number> = {
     goreng_ayam_pb: 0,
     goreng_ayam_pk: 0,
     goreng_kulit: 0,
@@ -765,6 +813,7 @@ export function calculateSoldUnitsFromSales(sales: SaleItem[]): Record<SellableS
     nasi: 0,
     s_chili_oil: 0,
     s_geprek: 0,
+    mineral_water: 0,
   };
 
   if (!Array.isArray(sales)) return units;
@@ -775,7 +824,7 @@ export function calculateSoldUnitsFromSales(sales: SaleItem[]): Record<SellableS
 
     const reqs = getProductRequirements(item);
     for (const req of reqs) {
-      units[req.stockKey] += req.qtyPerPackage * qty;
+      units[req.stockKey] = (units[req.stockKey] || 0) + req.qtyPerPackage * qty;
     }
   }
 
@@ -794,32 +843,22 @@ export function clampSalesToStock(
     return { clampedSales: sales, hasChanges: false };
   }
 
-  const availableStock: Record<SellableStockKey, number | null> = {
-    goreng_ayam_pb: parseStockQuantity(stock.goreng_ayam_pb),
-    goreng_ayam_pk: parseStockQuantity(stock.goreng_ayam_pk),
-    goreng_kulit: parseStockQuantity(stock.goreng_kulit),
-    goreng_kulit_ck: parseStockQuantity(stock.goreng_kulit_ck),
-    nasi: parseStockQuantity(stock.nasi),
-    s_chili_oil: parseStockQuantity(stock.s_chili_oil),
-    s_geprek: parseStockQuantity(stock.s_geprek),
-  };
+  const availableStock: Record<string, number | null> = {};
+  for (const [k, v] of Object.entries(stock)) {
+    availableStock[k] = parseStockQuantity(v);
+  }
 
-  const runningRemaining: Record<SellableStockKey, number> = {
-    goreng_ayam_pb: availableStock.goreng_ayam_pb ?? 0,
-    goreng_ayam_pk: availableStock.goreng_ayam_pk ?? 0,
-    goreng_kulit: availableStock.goreng_kulit ?? 0,
-    goreng_kulit_ck: availableStock.goreng_kulit_ck ?? 0,
-    nasi: availableStock.nasi ?? 0,
-    s_chili_oil: availableStock.s_chili_oil ?? 0,
-    s_geprek: availableStock.s_geprek ?? 0,
-  };
+  const runningRemaining: Record<string, number> = {};
+  for (const [k, v] of Object.entries(availableStock)) {
+    runningRemaining[k] = v ?? 0;
+  }
 
   let hasChanges = false;
   const clampedSales = sales.map((item) => {
     const reqs = getProductRequirements(item);
     if (reqs.length === 0) return item;
 
-    const hasUnfilledStock = reqs.some((r) => availableStock[r.stockKey] === null);
+    const hasUnfilledStock = reqs.some((r) => availableStock[r.stockKey] === null || availableStock[r.stockKey] === undefined);
     if (hasUnfilledStock) {
       if (item.quantity !== 0) {
         hasChanges = true;
@@ -828,7 +867,10 @@ export function clampSalesToStock(
       return item;
     }
 
-    const limits = reqs.map((r) => Math.floor(runningRemaining[r.stockKey] / r.qtyPerPackage));
+    const limits = reqs.map((r) => {
+      const rem = runningRemaining[r.stockKey];
+      return typeof rem === 'number' && !isNaN(rem) ? Math.floor(rem / r.qtyPerPackage) : 999999;
+    });
     const maxPossible = Math.max(0, Math.min(...limits));
 
     const safeQty = Math.max(0, Math.min(item.quantity, maxPossible));
@@ -837,7 +879,9 @@ export function clampSalesToStock(
     }
 
     for (const r of reqs) {
-      runningRemaining[r.stockKey] = Math.max(0, runningRemaining[r.stockKey] - safeQty * r.qtyPerPackage);
+      if (typeof runningRemaining[r.stockKey] === 'number') {
+        runningRemaining[r.stockKey] = Math.max(0, runningRemaining[r.stockKey] - safeQty * r.qtyPerPackage);
+      }
     }
 
     if (safeQty !== item.quantity) {
@@ -872,8 +916,8 @@ export interface RemainingStockCalculationResult {
 export function calculateAllRemainingStock(
   stock: StockData,
   sales: SaleItem[]
-): Record<SellableStockKey, RemainingStockCalculationResult | null> {
-  const result: Partial<Record<SellableStockKey, RemainingStockCalculationResult | null>> = {};
+): Record<string, RemainingStockCalculationResult | null> {
+  const result: Record<string, RemainingStockCalculationResult | null> = {};
   const soldUnits = calculateSoldUnitsFromSales(sales);
 
   for (const mapping of PRODUCT_STOCK_MAPPINGS) {
@@ -898,7 +942,30 @@ export function calculateAllRemainingStock(
     }
   }
 
-  return result as Record<SellableStockKey, RemainingStockCalculationResult | null>;
+  // Also calculate for any custom ready-to-sell stock keys present in stock:
+  for (const [key, val] of Object.entries(stock)) {
+    if (result[key] !== undefined) continue;
+    // Skip internal fields and raw kitchen items
+    if (key === 'tosser_in' || key === 'tosser_out' || key === 'ayam_mentah' || key === 'ayam_mentah_keterangan' || key === 'beras' || key === 'kulit_mentah' || key === 'masak_nasi' || key === 'masak_ayam_pb' || key === 'masak_ayam_pk' || key === 'masak_kulit_ck' || key === 'goreng_ayam') {
+      continue;
+    }
+    const stockNum = parseStockQuantity(val);
+    const soldQty = soldUnits[key] || 0;
+    if (stockNum !== null) {
+      result[key] = {
+        productId: 0,
+        productName: key,
+        stockKey: key,
+        unit: 'pcs',
+        stockNum,
+        soldQty,
+        remainingQty: Math.max(0, stockNum - soldQty),
+        isCalculated: true,
+      };
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -914,10 +981,9 @@ export function generateRemainingStockFromSales(
   const updated: StockData = { ...currentRemainingStock };
 
   // 1. Ready-to-sell products: Stok Awal - Penjualan Offline
-  for (const mapping of PRODUCT_STOCK_MAPPINGS) {
-    const calc = diffs[mapping.stockKey];
+  for (const [stockKey, calc] of Object.entries(diffs)) {
     if (calc && calc.isCalculated) {
-      updated[mapping.stockKey] = calc.remainingQty.toString();
+      updated[stockKey] = calc.remainingQty.toString();
     }
   }
 

@@ -164,7 +164,7 @@ export const DEFAULT_PRODUCTS: Product[] = [
   { id: 112, name: 'Paket HJ 2', selling_price: 25000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, ingredients: [{ barang_id: 1, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pb: 1, nasi: 1 } },
 
   // Modern Outlet Extra & Ala Carte
-  { id: 113, name: 'Kulit Extra', selling_price: 5000, active: true, outlet_type: 'modern', description: '1 porsi Kulit Crispy', barang_id: 4, ingredients: [{ barang_id: 4, qty: 1 }], items_composition: { kulit: 1 } },
+  { id: 113, name: 'Mineral Water', selling_price: 5000, active: true, outlet_type: 'modern', description: 'Mineral Water', barang_id: 11, ingredients: [{ barang_id: 11, qty: 1 }] },
   { id: 117, name: 'Kulit CK', selling_price: 5000, active: true, outlet_type: 'modern', description: '1 porsi Kulit CK', barang_id: 5, ingredients: [{ barang_id: 5, qty: 1 }], items_composition: { kulit_ck: 1 } },
   { id: 114, name: 'Nasi Extra', selling_price: 3000, active: true, outlet_type: 'modern', description: '1 porsi Nasi Tambahan', barang_id: 7, ingredients: [{ barang_id: 7, qty: 1 }], items_composition: { nasi: 1 } },
   { id: 115, name: 'Chili Oil Extra', selling_price: 1000, active: true, outlet_type: 'modern', description: 'Saus Chili Oil', barang_id: 9, ingredients: [{ barang_id: 9, qty: 1 }] },
@@ -216,6 +216,7 @@ export const DEFAULT_MASTER_BARANG: MasterBarangItem[] = [
   { id: 8, code: 'BRG-BERAS', name: 'Beras', category: 'raw', unit: 'kg', description: 'Bahan baku beras nyangu', active: true },
   { id: 9, code: 'BRG-CHILI', name: 'Sambal Chili Oil', category: 'ready', unit: 'pcs', description: 'Cup sambal chili oil', active: true },
   { id: 10, code: 'BRG-GEPREK', name: 'Sambal Geprek', category: 'ready', unit: 'pcs', description: 'Cup sambal geprek', active: true },
+  { id: 11, code: 'BRG-MINERAL', name: 'Mineral Water', category: 'ready', unit: 'pcs', description: 'Air Mineral / Mineral Water', active: true },
 ];
 
 export interface StockMasterItem {
@@ -243,6 +244,7 @@ export const DEFAULT_STOCK_ITEMS: StockMasterItem[] = [
   { id: 10, key: 'nasi', name: 'Nasi', category: 'ready', unit: 'pcs', active: true, barang_id: 7 },
   { id: 11, key: 's_chili_oil', name: 'S. Chili Oil', category: 'ready', unit: 'pcs', active: true, barang_id: 9 },
   { id: 12, key: 's_geprek', name: 'S. Geprek', category: 'ready', unit: 'pcs', active: true, barang_id: 10 },
+  { id: 14, key: 'mineral_water', name: 'Mineral Water', category: 'ready', unit: 'pcs', active: true, barang_id: 11 },
 ];
 
 export interface TosserMasterItem {
@@ -294,19 +296,21 @@ export interface EndingStockMasterItem {
   unit: string;
   tolerance_note?: string;
   active: boolean;
+  barang_id?: number;
 }
 
 export const DEFAULT_ENDING_STOCK_ITEMS: EndingStockMasterItem[] = [
-  { id: 1, key: 'ayam_mentah', name: 'Ayam Mentah (Sisa)', unit: 'kg', tolerance_note: 'Maks 0.5 kg (masuk freezer)', active: true },
-  { id: 2, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', unit: 'pcs', tolerance_note: 'Maks 2 pcs batas wajar', active: true },
-  { id: 3, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', unit: 'pcs', tolerance_note: 'Maks 2 pcs batas wajar', active: true },
-  { id: 4, key: 'goreng_kulit', name: 'Goreng Kulit', unit: 'pcs', tolerance_note: 'Maks 3 pcs batas wajar', active: true },
-  { id: 10, key: 'goreng_kulit_ck', name: 'Kulit CK', unit: 'pcs', tolerance_note: 'Maks 3 pcs batas wajar', active: true },
-  { id: 5, key: 'nasi', name: 'Nasi Sisa', unit: 'pcs', tolerance_note: 'Maks 5 pcs', active: true },
-  { id: 6, key: 's_chili_oil', name: 'S. Chili Oil', unit: 'pcs', tolerance_note: 'Maks 3 pcs', active: true },
-  { id: 7, key: 's_geprek', name: 'S. Geprek', unit: 'pcs', tolerance_note: 'Maks 3 pcs', active: true },
-  { id: 8, key: 'kulit_mentah', name: 'Kulit Mentah', unit: 'kg', tolerance_note: 'Simpan di chiller/freezer', active: true },
-  { id: 9, key: 'beras', name: 'Beras Sisa', unit: 'kg', tolerance_note: 'Simpan tertutup', active: true },
+  { id: 1, key: 'ayam_mentah', name: 'Ayam Mentah (Sisa)', unit: 'kg', tolerance_note: 'Maks 0.5 kg (masuk freezer)', active: true, barang_id: 3 },
+  { id: 2, key: 'goreng_ayam_pb', name: 'Goreng Ayam PB', unit: 'pcs', tolerance_note: 'Maks 2 pcs batas wajar', active: true, barang_id: 1 },
+  { id: 3, key: 'goreng_ayam_pk', name: 'Goreng Ayam PK', unit: 'pcs', tolerance_note: 'Maks 2 pcs batas wajar', active: true, barang_id: 2 },
+  { id: 4, key: 'goreng_kulit', name: 'Goreng Kulit', unit: 'pcs', tolerance_note: 'Maks 3 pcs batas wajar', active: true, barang_id: 4 },
+  { id: 10, key: 'goreng_kulit_ck', name: 'Kulit CK', unit: 'pcs', tolerance_note: 'Maks 3 pcs batas wajar', active: true, barang_id: 5 },
+  { id: 5, key: 'nasi', name: 'Nasi Sisa', unit: 'pcs', tolerance_note: 'Maks 5 pcs', active: true, barang_id: 7 },
+  { id: 6, key: 's_chili_oil', name: 'S. Chili Oil', unit: 'pcs', tolerance_note: 'Maks 3 pcs', active: true, barang_id: 9 },
+  { id: 7, key: 's_geprek', name: 'S. Geprek', unit: 'pcs', tolerance_note: 'Maks 3 pcs', active: true, barang_id: 10 },
+  { id: 8, key: 'kulit_mentah', name: 'Kulit Mentah', unit: 'kg', tolerance_note: 'Simpan di chiller/freezer', active: true, barang_id: 6 },
+  { id: 9, key: 'beras', name: 'Beras Sisa', unit: 'kg', tolerance_note: 'Simpan tertutup', active: true, barang_id: 8 },
+  { id: 11, key: 'mineral_water', name: 'Mineral Water', unit: 'pcs', tolerance_note: 'Sisa botol', active: true, barang_id: 11 },
 ];
 
 export interface ChickenConversionConfig {

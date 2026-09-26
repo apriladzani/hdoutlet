@@ -213,9 +213,15 @@
       "active": true,
       "outlet_type": "modern",
       "description": "Mineral Water",
-      "items_composition": {
-        "kulit": 1
-      }
+      "barang_id": 11,
+      "ingredients": [
+        {
+          "barang_id": 11,
+          "qty": 1,
+          "name": "Mineral Water",
+          "unit": "pcs"
+        }
+      ]
     },
     {
       "id": 114,
@@ -2042,6 +2048,15 @@
       "category": "ready",
       "unit": "pcs",
       "active": true
+    },
+    {
+      "id": 14,
+      "key": "mineral_water",
+      "name": "Mineral Water",
+      "category": "ready",
+      "unit": "pcs",
+      "active": true,
+      "barang_id": 11
     }
   ],
   "tosser_items": [
@@ -2264,6 +2279,15 @@
       "unit": "kg",
       "tolerance_note": "Simpan tertutup",
       "active": true
+    },
+    {
+      "id": 11,
+      "key": "mineral_water",
+      "name": "Mineral Water",
+      "unit": "pcs",
+      "tolerance_note": "Sisa botol",
+      "active": true,
+      "barang_id": 11
     }
   ]
 }
