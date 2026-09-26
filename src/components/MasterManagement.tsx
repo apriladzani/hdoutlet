@@ -39,6 +39,7 @@ import {
   MasterBarangItem,
   OutletItem,
   Product,
+  ProductIngredient,
   StockMasterItem,
   TosserMasterItem,
 } from '../types.ts';
@@ -237,7 +238,8 @@ export const MasterManagement: React.FC<MasterManagementProps> = ({
     outlet_type: 'traditional' | 'modern' | 'all';
     description: string;
     barang_id: number | '';
-  }>({ name: '', selling_price: 0, active: true, outlet_type: 'all', description: '', barang_id: '' });
+    ingredients: Array<{ barang_id: number | ''; qty: number }>;
+  }>({ name: '', selling_price: 0, active: true, outlet_type: 'all', description: '', barang_id: '', ingredients: [] });
 
   // Form Fields for Stock Item Modal (Beginning Stock)
   const [stockForm, setStockForm] = useState<{
@@ -601,20 +603,76 @@ Data transaksi akan tetap ada, tetapi relasi barang ini akan terputus.`;
     if (item) {
       setModalMode('edit');
       setCurrentEditItem(item);
+      let initialIngredients: Array<{ barang_id: number | ''; qty: number }> = [];
+      if (Array.isArray(item.ingredients) && item.ingredients.length > 0) {
+        initialIngredients = item.ingredients.map((ing) => ({
+          barang_id: ing.barang_id,
+          qty: Math.max(1, Number(ing.qty) || 1),
+        }));
+      } else if (item.barang_id) {
+        initialIngredients = [{ barang_id: item.barang_id, qty: 1 }];
+      } else if (item.items_composition) {
+        const comp = item.items_composition;
+        if (comp.pb) initialIngredients.push({ barang_id: 1, qty: comp.pb });
+        if (comp.pk) initialIngredients.push({ barang_id: 2, qty: comp.pk });
+        if (comp.nasi) initialIngredients.push({ barang_id: 7, qty: comp.nasi });
+        if (comp.kulit) initialIngredients.push({ barang_id: 4, qty: comp.kulit });
+        if (comp.kulit_ck) initialIngredients.push({ barang_id: 5, qty: comp.kulit_ck });
+      }
+
       setProductForm({
         name: item.name,
         selling_price: item.selling_price,
         active: item.active,
         outlet_type: item.outlet_type || 'traditional',
         description: item.description || '',
-        barang_id: item.barang_id ?? '',
+        barang_id: item.barang_id ?? (initialIngredients[0]?.barang_id || ''),
+        ingredients: initialIngredients.length > 0 ? initialIngredients : [{ barang_id: '', qty: 1 }],
       });
     } else {
       setModalMode('create');
       setCurrentEditItem(null);
-      setProductForm({ name: '', selling_price: 0, active: true, outlet_type: 'traditional', description: '', barang_id: '' });
+      setProductForm({
+        name: '',
+        selling_price: 0,
+        active: true,
+        outlet_type: 'traditional',
+        description: '',
+        barang_id: '',
+        ingredients: [{ barang_id: '', qty: 1 }],
+      });
     }
     setModalOpen(true);
+  };
+
+  const handleAddProductIngredient = () => {
+    setProductForm((prev) => ({
+      ...prev,
+      ingredients: [...prev.ingredients, { barang_id: '', qty: 1 }],
+    }));
+  };
+
+  const handleRemoveProductIngredient = (index: number) => {
+    setProductForm((prev) => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleProductIngredientChange = (
+    index: number,
+    field: 'barang_id' | 'qty',
+    value: any
+  ) => {
+    setProductForm((prev) => {
+      const next = [...prev.ingredients];
+      if (field === 'qty') {
+        next[index] = { ...next[index], qty: Math.max(1, parseInt(value, 10) || 1) };
+      } else {
+        next[index] = { ...next[index], barang_id: value ? Number(value) : '' };
+      }
+      return { ...prev, ingredients: next };
+    });
   };
 
   const handleSaveProduct = async () => {
@@ -622,10 +680,39 @@ Data transaksi akan tetap ada, tetapi relasi barang ini akan terputus.`;
       showToast('Nama produk wajib diisi!', 'error');
       return;
     }
+
+    const validIngredients = productForm.ingredients
+      .filter((ing) => ing.barang_id !== '' && Number(ing.barang_id) > 0)
+      .map((ing) => {
+        const b = masterBarang.find((item) => item.id === Number(ing.barang_id));
+        return {
+          barang_id: Number(ing.barang_id),
+          qty: Math.max(1, Number(ing.qty) || 1),
+          name: b?.name,
+          unit: b?.unit,
+        };
+      });
+
+    // Derive items_composition for backward compatibility
+    const items_composition: Record<string, number> = {};
+    for (const ing of validIngredients) {
+      if (ing.barang_id === 1) items_composition.pb = (items_composition.pb || 0) + ing.qty;
+      else if (ing.barang_id === 2) items_composition.pk = (items_composition.pk || 0) + ing.qty;
+      else if (ing.barang_id === 7) items_composition.nasi = (items_composition.nasi || 0) + ing.qty;
+      else if (ing.barang_id === 4) items_composition.kulit = (items_composition.kulit || 0) + ing.qty;
+      else if (ing.barang_id === 5) items_composition.kulit_ck = (items_composition.kulit_ck || 0) + ing.qty;
+    }
+
     try {
       const payload = {
-        ...productForm,
-        barang_id: productForm.barang_id ? Number(productForm.barang_id) : undefined,
+        name: productForm.name,
+        selling_price: productForm.selling_price,
+        active: productForm.active,
+        outlet_type: productForm.outlet_type,
+        description: productForm.description,
+        barang_id: validIngredients[0]?.barang_id || (productForm.barang_id ? Number(productForm.barang_id) : undefined),
+        ingredients: validIngredients,
+        items_composition: Object.keys(items_composition).length > 0 ? items_composition : undefined,
       };
       if (modalMode === 'create') {
         const res = await fetch('/api/products', {
@@ -1796,10 +1883,25 @@ Data transaksi akan tetap ada, tetapi relasi barang ini akan terputus.`;
                               {product.description}
                             </span>
                           )}
-                          {product.barang_id ? (
+                          {Array.isArray(product.ingredients) && product.ingredients.length > 0 ? (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                                <Boxes className="w-3 h-3 text-purple-600" />
+                                <span>Komposisi Bahan:</span>
+                              </span>
+                              {product.ingredients.map((ing, iIdx) => (
+                                <span
+                                  key={iIdx}
+                                  className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200"
+                                >
+                                  <strong>{ing.qty}×</strong> {getBarangName(ing.barang_id)} (ID #{ing.barang_id})
+                                </span>
+                              ))}
+                            </div>
+                          ) : product.barang_id ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
                               <Boxes className="w-3 h-3 text-purple-600" />
-                              Relasi: <strong>{getBarangName(product.barang_id)}</strong> (ID #{product.barang_id})
+                              Relasi: <strong>1× {getBarangName(product.barang_id)}</strong> (ID #{product.barang_id})
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
@@ -2693,30 +2795,114 @@ Data transaksi akan tetap ada, tetapi relasi barang ini akan terputus.`;
                       Komposisi paket (seperti "1 pk + 1 nasi") akan digunakan untuk kalkulasi otomatis pengurangan sisa stok.
                     </p>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Relasi ke Data Barang (ID Barang) <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={productForm.barang_id ?? ''}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          barang_id: e.target.value ? Number(e.target.value) : '',
+                  {/* Relasi Bahan & Stok (One-to-Many Multi-Ingredient) */}
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800">
+                          Relasi Bahan Baku & Stok <span className="text-[#E4002B]">*</span>
+                        </label>
+                        <p className="text-[11px] text-slate-500">
+                          Satu menu dapat memiliki beberapa bahan sekaligus (Format: <strong>Nama Bahan + Qty Pemakaian</strong>).
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddProductIngredient}
+                        className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-[#E4002B] rounded-lg text-xs font-bold transition-all flex items-center gap-1 border border-red-200 cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Tambah Bahan</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 max-h-56 overflow-y-auto p-0.5">
+                      {productForm.ingredients.length === 0 ? (
+                        <div className="p-3 text-center bg-slate-50 border border-dashed border-slate-300 rounded-xl text-xs text-slate-500">
+                          Belum ada relasi bahan. Klik <strong>"+ Tambah Bahan"</strong> untuk menambahkan komponen bahan (misal: Ayam PK, Nasi, dll).
+                        </div>
+                      ) : (
+                        productForm.ingredients.map((ing, idx) => {
+                          const selectedB = masterBarang.find((b) => b.id === Number(ing.barang_id));
+                          return (
+                            <div
+                              key={idx}
+                              className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2 transition-all hover:border-slate-300"
+                            >
+                              <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-black flex items-center justify-center shrink-0">
+                                {idx + 1}
+                              </span>
+
+                              {/* Barang Dropdown */}
+                              <div className="flex-1 min-w-0">
+                                <select
+                                  value={ing.barang_id}
+                                  onChange={(e) => handleProductIngredientChange(idx, 'barang_id', e.target.value)}
+                                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#E4002B]"
+                                >
+                                  <option value="">-- Pilih Bahan Baku / Stok --</option>
+                                  {masterBarang.map((b) => (
+                                    <option key={b.id} value={b.id}>
+                                      [ID #{b.id}] {b.name} ({b.unit})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Qty Pemakaian Input */}
+                              <div className="w-28 shrink-0 flex items-center gap-1.5">
+                                <span className="text-[10px] font-bold text-slate-400">Qty:</span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={ing.qty || 1}
+                                  onChange={(e) => handleProductIngredientChange(idx, 'qty', e.target.value)}
+                                  className="w-14 px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-900 text-center focus:outline-none focus:ring-1 focus:ring-[#E4002B]"
+                                  title="Jumlah pemakaian bahan per 1 menu terjual"
+                                />
+                                <span className="text-[11px] font-bold text-slate-500 truncate">
+                                  {selectedB?.unit || 'pcs'}
+                                </span>
+                              </div>
+
+                              {/* Delete button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveProductIngredient(idx)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                                title="Hapus bahan ini"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
                         })
-                      }
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#E4002B]/20 focus:border-[#E4002B]"
-                    >
-                      <option value="">-- Pilih Barang Terkait --</option>
-                      {masterBarang.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          [ID #{b.id}] {b.name} ({b.unit}) {b.code ? `[${b.code}]` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      Data penjualan menu ini akan terhubung ke ID barang yang dipilih. Relasi tetap aman meski nama barang diubah.
-                    </p>
+                      )}
+                    </div>
+
+                    {productForm.ingredients.length > 0 && productForm.ingredients.some((i) => i.barang_id) && (
+                      <div className="mt-2.5 p-2 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800 flex items-start gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <strong>Perhitungan Pengurangan Stok:</strong>
+                          <div className="text-slate-700 mt-0.5">
+                            Setiap 1 {productForm.name || 'menu'} terjual, memotong:{' '}
+                            <span className="font-bold text-[#E4002B]">
+                              {productForm.ingredients
+                                .filter((i) => i.barang_id)
+                                .map((i) => {
+                                  const b = masterBarang.find((mb) => mb.id === Number(i.barang_id));
+                                  return `${i.qty}× ${b?.name || `ID #${i.barang_id}`}`;
+                                })
+                                .join(' dan ')}
+                            </span>.
+                          </div>
+                          <div className="text-slate-500 text-[10px] italic mt-0.5">
+                            Formula: Stok Berkurang = Qty Sales × Qty Pemakaian Bahan
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

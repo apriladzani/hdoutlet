@@ -20,13 +20,15 @@ import {
   Lock,
   Check,
   X,
+  Tag,
 } from 'lucide-react';
-import { DailyReport, OUTLETS } from '../types.ts';
+import { DailyReport, SaleItem, OUTLETS } from '../types.ts';
 import { formatRupiah, formatIndonesianDate } from '../utils/formatters.ts';
 import {
   calculateLoss,
   calculateLossPercentage,
   calculateExpensePercentage,
+  calculateSoldUnitsFromSales,
   formatPercentage,
 } from '../utils/stockCalculations.ts';
 
@@ -142,6 +144,10 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
     let totalPbLossQty = 0;
     let totalPkLossQty = 0;
     let totalNasiLossQty = 0;
+    let totalPbSold = 0;
+    let totalPkSold = 0;
+    let totalNasiSold = 0;
+    let totalKulitSold = 0;
 
     for (const r of filteredReports) {
       totalIncome += Number(r.total_income) || 0;
@@ -154,10 +160,50 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
       totalPbLossQty += loss.pbQty;
       totalPkLossQty += loss.pkQty;
       totalNasiLossQty += loss.nasiQty;
+
+      // Hitung total produk terjual: PB, PK, Nasi, Kulit
+      let salesList: SaleItem[] = [];
+      if (Array.isArray(r.sales)) {
+        salesList = r.sales;
+      } else if (typeof (r as any).sales === 'string') {
+        try {
+          salesList = JSON.parse((r as any).sales);
+        } catch {
+          salesList = [];
+        }
+      }
+
+      if (salesList.length > 0) {
+        const soldUnits = calculateSoldUnitsFromSales(salesList);
+        totalPbSold += soldUnits.goreng_ayam_pb || 0;
+        totalPkSold += soldUnits.goreng_ayam_pk || 0;
+        totalNasiSold += soldUnits.nasi || 0;
+        totalKulitSold += (soldUnits.goreng_kulit || 0) + (soldUnits.goreng_kulit_ck || 0);
+      } else {
+        // Fallback selisih stok jika data sales item belum terisi
+        const initialPb = Number(r.stock?.goreng_ayam_pb) || 0;
+        const remPb = Number(r.remaining_stock?.goreng_ayam_pb) || 0;
+        totalPbSold += Math.max(0, initialPb - remPb);
+
+        const initialPk = Number(r.stock?.goreng_ayam_pk) || 0;
+        const remPk = Number(r.remaining_stock?.goreng_ayam_pk) || 0;
+        totalPkSold += Math.max(0, initialPk - remPk);
+
+        const initialNasi = Number(r.stock?.nasi) || 0;
+        const remNasi = Number(r.remaining_stock?.nasi) || 0;
+        totalNasiSold += Math.max(0, initialNasi - remNasi);
+
+        const initialKulit =
+          (Number(r.stock?.goreng_kulit) || 0) + (Number(r.stock?.goreng_kulit_ck) || 0);
+        const remKulit =
+          (Number(r.remaining_stock?.goreng_kulit) || 0) + (Number(r.remaining_stock?.goreng_kulit_ck) || 0);
+        totalKulitSold += Math.max(0, initialKulit - remKulit);
+      }
     }
 
     const lossPercentage = totalIncome > 0 ? (totalLoss / totalIncome) * 100 : 0;
     const expensePercentage = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
+    const promoPercentage = totalIncome > 0 ? (totalPromo / totalIncome) * 100 : 0;
 
     return {
       count: filteredReports.length,
@@ -169,8 +215,13 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
       totalPbLossQty,
       totalPkLossQty,
       totalNasiLossQty,
+      totalPbSold,
+      totalPkSold,
+      totalNasiSold,
+      totalKulitSold,
       lossPercentage,
       expensePercentage,
+      promoPercentage,
     };
   }, [filteredReports]);
 
@@ -623,94 +674,153 @@ export const ReportHistory: React.FC<ReportHistoryProps> = ({
           )}
         </div>
 
-        {/* 4 Cards Grid for Pemasukan, Pengeluaran, Bersih, Loss */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        {/* 5 Cards Grid: Pemasukan (w/ PB, PK, Nasi, Kulit), Pengeluaran (Aktual), Diskon, Bersih, Loss */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
           {/* 1. Total Pemasukan */}
           <div
             id="summary-total-pemasukan"
-            className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between"
+            className="col-span-2 sm:col-span-1 lg:col-span-1 bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between text-emerald-800 mb-1">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
-                Total Pemasukan
+            <div>
+              <div className="flex items-center justify-between text-emerald-800 mb-1">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
+                  Total Pemasukan
+                </span>
+                <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
+              </div>
+              <div className="text-base sm:text-xl font-black text-emerald-950 tracking-tight">
+                {formatRupiah(filterSummary.totalIncome)}
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-emerald-700/90 font-medium mt-0.5">
+                Akumulasi penerimaan kotor
+              </div>
+            </div>
+
+            {/* Keterangan Terjual: PB, PK, Nasi, Kulit */}
+            <div className="mt-2.5 pt-2 border-t border-emerald-200/70">
+              <span className="text-[10px] font-bold text-emerald-900 block mb-1">
+                Keterangan:
               </span>
-              <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
-            </div>
-            <div className="text-base sm:text-xl font-black text-emerald-950 tracking-tight">
-              {formatRupiah(filterSummary.totalIncome)}
-            </div>
-            <div className="text-[10px] sm:text-[11px] text-emerald-700/90 font-medium mt-1">
-              Akumulasi penerimaan kotor
+              <div className="grid grid-cols-2 gap-1 text-[11px]">
+                <div className="flex items-center justify-between bg-white/70 px-1.5 py-0.5 rounded border border-emerald-200/50">
+                  <span className="text-emerald-800 font-semibold">PB:</span>
+                  <span className="font-bold text-emerald-950">{filterSummary.totalPbSold.toLocaleString('id-ID')} pcs</span>
+                </div>
+                <div className="flex items-center justify-between bg-white/70 px-1.5 py-0.5 rounded border border-emerald-200/50">
+                  <span className="text-emerald-800 font-semibold">PK:</span>
+                  <span className="font-bold text-emerald-950">{filterSummary.totalPkSold.toLocaleString('id-ID')} pcs</span>
+                </div>
+                <div className="flex items-center justify-between bg-white/70 px-1.5 py-0.5 rounded border border-emerald-200/50">
+                  <span className="text-emerald-800 font-semibold">Nasi:</span>
+                  <span className="font-bold text-emerald-950">{filterSummary.totalNasiSold.toLocaleString('id-ID')} pcs</span>
+                </div>
+                <div className="flex items-center justify-between bg-white/70 px-1.5 py-0.5 rounded border border-emerald-200/50">
+                  <span className="text-emerald-800 font-semibold">Kulit:</span>
+                  <span className="font-bold text-emerald-950">{filterSummary.totalKulitSold.toLocaleString('id-ID')} pcs</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 2. Total Pengeluaran */}
+          {/* 2. Total Pengeluaran (Hanya Pengeluaran Aktual) */}
           <div
             id="summary-total-pengeluaran"
             className="bg-rose-50/70 border border-rose-200/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between text-rose-800 mb-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
-                  Total Pengeluaran
-                </span>
-                {filterSummary.expensePercentage > 0 && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 bg-rose-200 text-rose-950 rounded-full" title="Persentase: (Total Pengeluaran ÷ Total Pemasukan) × 100%">
-                    {formatPercentage(filterSummary.expensePercentage)}
+            <div>
+              <div className="flex items-center justify-between text-rose-800 mb-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
+                    Total Pengeluaran
                   </span>
-                )}
+                  {filterSummary.expensePercentage > 0 && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 bg-rose-200 text-rose-950 rounded-full" title="Persentase: (Total Pengeluaran ÷ Total Pemasukan) × 100%">
+                      {formatPercentage(filterSummary.expensePercentage)}
+                    </span>
+                  )}
+                </div>
+                <TrendingDown className="w-4 h-4 text-rose-600 shrink-0" />
               </div>
-              <TrendingDown className="w-4 h-4 text-rose-600 shrink-0" />
+              <div className="text-base sm:text-xl font-black text-rose-950 tracking-tight">
+                {formatRupiah(filterSummary.totalExpense)}
+              </div>
             </div>
-            <div className="text-base sm:text-xl font-black text-rose-950 tracking-tight">
-              {formatRupiah(filterSummary.totalExpense)}
-            </div>
-            <div className="text-[10px] sm:text-[11px] text-rose-700/90 font-medium mt-1 truncate">
-              {filterSummary.totalPromo > 0
-                ? `Biaya operasional (+Promo: ${formatRupiah(filterSummary.totalPromo)})`
-                : 'Biaya operasional & belanja'}
+            <div className="text-[10px] sm:text-[11px] text-rose-700/90 font-medium mt-1 truncate" title="Pengeluaran operasional aktual">
+              Pengeluaran aktual
             </div>
           </div>
 
-          {/* 3. Total Bersih (Setoran) */}
+          {/* 3. Total Diskon (Terpisah) */}
+          <div
+            id="summary-total-diskon"
+            className="bg-violet-50/70 border border-violet-200/80 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between text-violet-800 mb-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
+                    Total Diskon
+                  </span>
+                  {filterSummary.promoPercentage > 0 && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 bg-violet-200 text-violet-950 rounded-full" title="Persentase: (Total Diskon ÷ Total Pemasukan) × 100%">
+                      {formatPercentage(filterSummary.promoPercentage)}
+                    </span>
+                  )}
+                </div>
+                <Tag className="w-4 h-4 text-violet-600 shrink-0" />
+              </div>
+              <div className="text-base sm:text-xl font-black text-violet-950 tracking-tight">
+                {formatRupiah(filterSummary.totalPromo)}
+              </div>
+            </div>
+            <div className="text-[10px] sm:text-[11px] text-violet-700/90 font-medium mt-1 truncate" title="Total potongan promo/diskon">
+              Total potongan diskon
+            </div>
+          </div>
+
+          {/* 4. Total Bersih (Setoran) */}
           <div
             id="summary-total-bersih"
             className="bg-slate-900 text-white rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-xs border border-slate-800"
           >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-red-400">
-                Total Bersih
-              </span>
-              <Coins className="w-4 h-4 text-red-400 shrink-0" />
-            </div>
-            <div className="text-base sm:text-xl font-black text-white tracking-tight">
-              {formatRupiah(filterSummary.totalClean)}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-red-400">
+                  Total Bersih
+                </span>
+                <Coins className="w-4 h-4 text-red-400 shrink-0" />
+              </div>
+              <div className="text-base sm:text-xl font-black text-white tracking-tight">
+                {formatRupiah(filterSummary.totalClean)}
+              </div>
             </div>
             <div className="text-[10px] sm:text-[11px] text-slate-300 font-medium mt-1">
               Setoran kas bersih akhir
             </div>
           </div>
 
-          {/* 4. Total Loss */}
+          {/* 5. Total Loss */}
           <div
             id="summary-total-loss"
             className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between"
           >
-            <div className="flex items-center justify-between text-amber-900 mb-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
-                  Total Loss
-                </span>
-                {filterSummary.lossPercentage > 0 && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 bg-amber-200 text-amber-950 rounded-full">
-                    {formatPercentage(filterSummary.lossPercentage)}
+            <div>
+              <div className="flex items-center justify-between text-amber-900 mb-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
+                    Total Loss
                   </span>
-                )}
+                  {filterSummary.lossPercentage > 0 && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 bg-amber-200 text-amber-950 rounded-full">
+                      {formatPercentage(filterSummary.lossPercentage)}
+                    </span>
+                  )}
+                </div>
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
               </div>
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            </div>
-            <div className="text-base sm:text-xl font-black text-amber-950 tracking-tight">
-              {formatRupiah(filterSummary.totalLoss)}
+              <div className="text-base sm:text-xl font-black text-amber-950 tracking-tight">
+                {formatRupiah(filterSummary.totalLoss)}
+              </div>
             </div>
             <div
               className="text-[10px] sm:text-[11px] text-amber-800/90 font-semibold mt-1 truncate"

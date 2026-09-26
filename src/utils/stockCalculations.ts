@@ -1,4 +1,4 @@
-import { SaleItem, StockData, TosserData, ChickenConversionConfig, DEFAULT_CHICKEN_CONVERSION } from '../types.ts';
+import { SaleItem, StockData, TosserData, ChickenConversionConfig, DEFAULT_CHICKEN_CONVERSION, ProductIngredient } from '../types.ts';
 
 export interface TosserProductConfig {
   key: keyof TosserData;
@@ -332,6 +332,46 @@ export interface ProductStockSummary {
   isAtMax: boolean;
 }
 
+export function mapBarangIdToStockKey(
+  barangId?: number,
+  barangName?: string
+): { stockKey: SellableStockKey; label: string; shortLabel: string; unit: string } | null {
+  if (barangId === 1) return { stockKey: 'goreng_ayam_pb', label: 'Ayam PB', shortLabel: 'PB', unit: 'pcs' };
+  if (barangId === 2) return { stockKey: 'goreng_ayam_pk', label: 'Ayam PK', shortLabel: 'PK', unit: 'pcs' };
+  if (barangId === 4) return { stockKey: 'goreng_kulit', label: 'Kulit', shortLabel: 'Kulit', unit: 'pcs' };
+  if (barangId === 5) return { stockKey: 'goreng_kulit_ck', label: 'Kulit CK', shortLabel: 'Kulit CK', unit: 'pcs' };
+  if (barangId === 7) return { stockKey: 'nasi', label: 'Nasi', shortLabel: 'Nasi', unit: 'porsi' };
+  if (barangId === 9) return { stockKey: 's_chili_oil', label: 'Chili Oil', shortLabel: 'Chili Oil', unit: 'cup' };
+  if (barangId === 10) return { stockKey: 's_geprek', label: 'Geprek', shortLabel: 'Geprek', unit: 'cup' };
+
+  if (barangName) {
+    const n = barangName.toLowerCase();
+    if (n.includes('pb') || (n.includes('ayam') && (n.includes('besar') || n.includes('dada') || n.includes('paha atas')))) {
+      return { stockKey: 'goreng_ayam_pb', label: 'Ayam PB', shortLabel: 'PB', unit: 'pcs' };
+    }
+    if (n.includes('pk') || (n.includes('ayam') && (n.includes('kecil') || n.includes('sayap') || n.includes('paha bawah')))) {
+      return { stockKey: 'goreng_ayam_pk', label: 'Ayam PK', shortLabel: 'PK', unit: 'pcs' };
+    }
+    if (n.includes('ck')) {
+      return { stockKey: 'goreng_kulit_ck', label: 'Kulit CK', shortLabel: 'Kulit CK', unit: 'pcs' };
+    }
+    if (n.includes('kulit')) {
+      return { stockKey: 'goreng_kulit', label: 'Kulit', shortLabel: 'Kulit', unit: 'pcs' };
+    }
+    if (n.includes('nasi') || n.includes('beras')) {
+      return { stockKey: 'nasi', label: 'Nasi', shortLabel: 'Nasi', unit: 'porsi' };
+    }
+    if (n.includes('chili') || n.includes('oil')) {
+      return { stockKey: 's_chili_oil', label: 'Chili Oil', shortLabel: 'Chili Oil', unit: 'cup' };
+    }
+    if (n.includes('geprek')) {
+      return { stockKey: 's_geprek', label: 'Geprek', shortLabel: 'Geprek', unit: 'cup' };
+    }
+  }
+
+  return null;
+}
+
 /**
  * Returns required stock components for any product or package
  */
@@ -340,19 +380,57 @@ export function getProductRequirements(item: {
   product_name?: string;
   name?: string;
   description?: string;
+  barang_id?: number;
+  ingredients?: ProductIngredient[];
   items_composition?: {
     pb?: number;
     pk?: number;
     nasi?: number;
     kulit?: number;
     kulit_ck?: number;
+    [key: string]: number | undefined;
   };
 }): PackageComponentRequirement[] {
   const name = (item.product_name || item.name || '').toLowerCase().trim();
   const nameNorm = name.replace(/\s+/g, '');
   const id = item.product_id;
 
-  // 1. If explicit items_composition is provided
+  // 1. One-to-Many Multi-Ingredient System (Highest Priority)
+  // Format: Nama Bahan / ID Bahan + Qty Pemakaian
+  // Stok Berkurang = Qty Sales * Qty Pemakaian Bahan
+  const ingredients: ProductIngredient[] = (item as any).ingredients || [];
+  if (Array.isArray(ingredients) && ingredients.length > 0) {
+    const reqs: PackageComponentRequirement[] = [];
+    for (const ing of ingredients) {
+      const bId = Number(ing.barang_id);
+      const qty = Math.max(1, Number(ing.qty) || 1);
+      const mapped = mapBarangIdToStockKey(bId, ing.name);
+      if (mapped) {
+        reqs.push({
+          stockKey: mapped.stockKey,
+          label: mapped.label,
+          shortLabel: mapped.shortLabel,
+          unit: mapped.unit,
+          qtyPerPackage: qty,
+        });
+      }
+    }
+    if (reqs.length > 0) {
+      // Consolidate if the same stockKey was added multiple times (sum quantities to avoid duplicate subtractions)
+      const consolidatedMap = new Map<SellableStockKey, PackageComponentRequirement>();
+      for (const r of reqs) {
+        const existing = consolidatedMap.get(r.stockKey);
+        if (existing) {
+          existing.qtyPerPackage += r.qtyPerPackage;
+        } else {
+          consolidatedMap.set(r.stockKey, { ...r });
+        }
+      }
+      return Array.from(consolidatedMap.values());
+    }
+  }
+
+  // 2. If explicit items_composition is provided (Backward Compatibility)
   if (item.items_composition && Object.keys(item.items_composition).length > 0) {
     const reqs: PackageComponentRequirement[] = [];
     if (item.items_composition.pb) {
@@ -403,15 +481,12 @@ export function getProductRequirements(item: {
     if (reqs.length > 0) return reqs;
   }
 
-  // 1b. Check barang_id relation if present
+  // 3. Check single barang_id relation if present
   const barangId = (item as any).barang_id;
-  if (barangId === 1) return [{ stockKey: 'goreng_ayam_pb', label: 'Ayam PB', shortLabel: 'PB', unit: 'pcs', qtyPerPackage: 1 }];
-  if (barangId === 2) return [{ stockKey: 'goreng_ayam_pk', label: 'Ayam PK', shortLabel: 'PK', unit: 'pcs', qtyPerPackage: 1 }];
-  if (barangId === 4) return [{ stockKey: 'goreng_kulit', label: 'Kulit', shortLabel: 'Kulit', unit: 'pcs', qtyPerPackage: 1 }];
-  if (barangId === 5) return [{ stockKey: 'goreng_kulit_ck', label: 'Kulit CK', shortLabel: 'Kulit CK', unit: 'pcs', qtyPerPackage: 1 }];
-  if (barangId === 7) return [{ stockKey: 'nasi', label: 'Nasi', shortLabel: 'Nasi', unit: 'porsi', qtyPerPackage: 1 }];
-  if (barangId === 9) return [{ stockKey: 's_chili_oil', label: 'Chili Oil', shortLabel: 'Chili Oil', unit: 'cup', qtyPerPackage: 1 }];
-  if (barangId === 10) return [{ stockKey: 's_geprek', label: 'Geprek', shortLabel: 'Geprek', unit: 'cup', qtyPerPackage: 1 }];
+  const singleMapped = mapBarangIdToStockKey(barangId, name);
+  if (singleMapped) {
+    return [{ stockKey: singleMapped.stockKey, label: singleMapped.label, shortLabel: singleMapped.shortLabel, unit: singleMapped.unit, qtyPerPackage: 1 }];
+  }
 
   // 2. Traditional single items
   if (id === 1 || name === 'ayam pb') {

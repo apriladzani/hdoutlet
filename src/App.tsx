@@ -132,6 +132,8 @@ function getInitialSales(targetType: 'traditional' | 'modern' = 'traditional'): 
       subtotal: 0,
       description: p.description,
       items_composition: p.items_composition,
+      ingredients: p.ingredients,
+      barang_id: p.barang_id,
     }));
 }
 
@@ -495,6 +497,8 @@ export default function App() {
             subtotal: qty * p.selling_price,
             description: p.description,
             items_composition: p.items_composition,
+            ingredients: p.ingredients,
+            barang_id: p.barang_id,
           };
         });
       });
@@ -546,6 +550,8 @@ export default function App() {
         subtotal: found ? found.subtotal : 0,
         description: p.description,
         items_composition: p.items_composition,
+        ingredients: p.ingredients,
+        barang_id: p.barang_id,
       };
     });
     setSales(hydratedSales);

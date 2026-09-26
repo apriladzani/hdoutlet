@@ -1093,6 +1093,7 @@ export const jsonDbService = {
       outlet_type: data.outlet_type || 'traditional',
       description: data.description || '',
       items_composition: data.items_composition,
+      ingredients: data.ingredients,
       barang_id: data.barang_id ? Number(data.barang_id) : undefined,
     };
     products.push(newProduct);
@@ -1115,6 +1116,7 @@ export const jsonDbService = {
       outlet_type: data.outlet_type !== undefined ? data.outlet_type : existing.outlet_type,
       description: data.description !== undefined ? data.description : existing.description,
       items_composition: data.items_composition !== undefined ? data.items_composition : existing.items_composition,
+      ingredients: data.ingredients !== undefined ? data.ingredients : existing.ingredients,
       barang_id: data.barang_id !== undefined ? (data.barang_id ? Number(data.barang_id) : undefined) : existing.barang_id,
     };
     db.products = products;

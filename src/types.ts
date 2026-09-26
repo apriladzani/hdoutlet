@@ -31,6 +31,13 @@ export interface StockData {
   [key: string]: any;
 }
 
+export interface ProductIngredient {
+  barang_id: number;
+  qty: number;
+  name?: string;
+  unit?: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -39,12 +46,14 @@ export interface Product {
   outlet_type?: 'traditional' | 'modern' | 'all';
   description?: string;
   barang_id?: number;
+  ingredients?: ProductIngredient[];
   items_composition?: {
     pb?: number;
     pk?: number;
     nasi?: number;
     kulit?: number;
     kulit_ck?: number;
+    [key: string]: number | undefined;
   };
 }
 
@@ -55,12 +64,15 @@ export interface SaleItem {
   quantity: number;
   subtotal: number;
   description?: string;
+  barang_id?: number;
+  ingredients?: ProductIngredient[];
   items_composition?: {
     pb?: number;
     pk?: number;
     nasi?: number;
     kulit?: number;
     kulit_ck?: number;
+    [key: string]: number | undefined;
   };
 }
 
@@ -129,34 +141,34 @@ export interface ReportFormData {
 
 export const DEFAULT_PRODUCTS: Product[] = [
   // Traditional Outlet Menu
-  { id: 1, name: 'Ayam PB', selling_price: 9000, active: true, outlet_type: 'traditional', description: '1 pcs Dada / Paha Atas', barang_id: 1, items_composition: { pb: 1 } },
-  { id: 2, name: 'Ayam PK', selling_price: 7000, active: true, outlet_type: 'traditional', description: '1 pcs Sayap / Paha Bawah', barang_id: 2, items_composition: { pk: 1 } },
-  { id: 3, name: 'Kulit', selling_price: 5000, active: true, outlet_type: 'traditional', description: '1 porsi Kulit Crispy', barang_id: 4, items_composition: { kulit: 1 } },
-  { id: 7, name: 'Kulit CK', selling_price: 5000, active: true, outlet_type: 'traditional', description: '1 porsi Kulit CK', barang_id: 5, items_composition: { kulit_ck: 1 } },
-  { id: 4, name: 'Nasi', selling_price: 3000, active: true, outlet_type: 'traditional', description: '1 porsi Nasi Hangat', barang_id: 7, items_composition: { nasi: 1 } },
-  { id: 5, name: 'Chili Oil', selling_price: 1000, active: true, outlet_type: 'traditional', description: '1 cup Sambal Chili Oil', barang_id: 9 },
-  { id: 6, name: 'Geprek', selling_price: 2000, active: true, outlet_type: 'traditional', description: '1 cup Sambal Geprek', barang_id: 10 },
+  { id: 1, name: 'Ayam PB', selling_price: 9000, active: true, outlet_type: 'traditional', description: '1 pcs Dada / Paha Atas', barang_id: 1, ingredients: [{ barang_id: 1, qty: 1 }], items_composition: { pb: 1 } },
+  { id: 2, name: 'Ayam PK', selling_price: 7000, active: true, outlet_type: 'traditional', description: '1 pcs Sayap / Paha Bawah', barang_id: 2, ingredients: [{ barang_id: 2, qty: 1 }], items_composition: { pk: 1 } },
+  { id: 3, name: 'Kulit', selling_price: 5000, active: true, outlet_type: 'traditional', description: '1 porsi Kulit Crispy', barang_id: 4, ingredients: [{ barang_id: 4, qty: 1 }], items_composition: { kulit: 1 } },
+  { id: 7, name: 'Kulit CK', selling_price: 5000, active: true, outlet_type: 'traditional', description: '1 porsi Kulit CK', barang_id: 5, ingredients: [{ barang_id: 5, qty: 1 }], items_composition: { kulit_ck: 1 } },
+  { id: 4, name: 'Nasi', selling_price: 3000, active: true, outlet_type: 'traditional', description: '1 porsi Nasi Hangat', barang_id: 7, ingredients: [{ barang_id: 7, qty: 1 }], items_composition: { nasi: 1 } },
+  { id: 5, name: 'Chili Oil', selling_price: 1000, active: true, outlet_type: 'traditional', description: '1 cup Sambal Chili Oil', barang_id: 9, ingredients: [{ barang_id: 9, qty: 1 }] },
+  { id: 6, name: 'Geprek', selling_price: 2000, active: true, outlet_type: 'traditional', description: '1 cup Sambal Geprek', barang_id: 10, ingredients: [{ barang_id: 10, qty: 1 }] },
 
   // Modern Outlet Menu
-  { id: 101, name: 'Hemat 1', selling_price: 20000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, items_composition: { pk: 1, nasi: 1 } },
-  { id: 102, name: 'Hemat 2', selling_price: 23000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, items_composition: { pb: 1, nasi: 1 } },
-  { id: 103, name: 'Double', selling_price: 30000, active: true, outlet_type: 'modern', description: '1 pk + 1 pb + 1 nasi', barang_id: 1, items_composition: { pk: 1, pb: 1, nasi: 1 } },
-  { id: 104, name: 'Family', selling_price: 100000, active: true, outlet_type: 'modern', description: '3 pb + 2 pk + 5 nasi', barang_id: 1, items_composition: { pb: 3, pk: 2, nasi: 5 } },
-  { id: 105, name: 'Paket Ori 1', selling_price: 20000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, items_composition: { pk: 1, nasi: 1 } },
-  { id: 106, name: 'Paket Ori 2', selling_price: 23000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, items_composition: { pb: 1, nasi: 1 } },
-  { id: 107, name: 'Paket BB 1', selling_price: 22000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, items_composition: { pk: 1, nasi: 1 } },
-  { id: 108, name: 'Paket BB 2', selling_price: 25000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, items_composition: { pb: 1, nasi: 1 } },
-  { id: 109, name: 'Paket LH 1', selling_price: 22000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, items_composition: { pk: 1, nasi: 1 } },
-  { id: 110, name: 'Paket LH 2', selling_price: 25000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, items_composition: { pb: 1, nasi: 1 } },
-  { id: 111, name: 'Paket HJ 1', selling_price: 22000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, items_composition: { pk: 1, nasi: 1 } },
-  { id: 112, name: 'Paket HJ 2', selling_price: 25000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, items_composition: { pb: 1, nasi: 1 } },
+  { id: 101, name: 'Hemat 1', selling_price: 20000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, ingredients: [{ barang_id: 2, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pk: 1, nasi: 1 } },
+  { id: 102, name: 'Hemat 2', selling_price: 23000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, ingredients: [{ barang_id: 1, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pb: 1, nasi: 1 } },
+  { id: 103, name: 'Double', selling_price: 30000, active: true, outlet_type: 'modern', description: '1 pk + 1 pb + 1 nasi', barang_id: 1, ingredients: [{ barang_id: 2, qty: 1 }, { barang_id: 1, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pk: 1, pb: 1, nasi: 1 } },
+  { id: 104, name: 'Family', selling_price: 100000, active: true, outlet_type: 'modern', description: '3 pb + 2 pk + 5 nasi', barang_id: 1, ingredients: [{ barang_id: 1, qty: 3 }, { barang_id: 2, qty: 2 }, { barang_id: 7, qty: 5 }], items_composition: { pb: 3, pk: 2, nasi: 5 } },
+  { id: 105, name: 'Paket Ori 1', selling_price: 20000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, ingredients: [{ barang_id: 2, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pk: 1, nasi: 1 } },
+  { id: 106, name: 'Paket Ori 2', selling_price: 23000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, ingredients: [{ barang_id: 1, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pb: 1, nasi: 1 } },
+  { id: 107, name: 'Paket BB 1', selling_price: 22000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, ingredients: [{ barang_id: 2, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pk: 1, nasi: 1 } },
+  { id: 108, name: 'Paket BB 2', selling_price: 25000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, ingredients: [{ barang_id: 1, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pb: 1, nasi: 1 } },
+  { id: 109, name: 'Paket LH 1', selling_price: 22000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, ingredients: [{ barang_id: 2, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pk: 1, nasi: 1 } },
+  { id: 110, name: 'Paket LH 2', selling_price: 25000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, ingredients: [{ barang_id: 1, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pb: 1, nasi: 1 } },
+  { id: 111, name: 'Paket HJ 1', selling_price: 22000, active: true, outlet_type: 'modern', description: '1 pk + 1 nasi', barang_id: 2, ingredients: [{ barang_id: 2, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pk: 1, nasi: 1 } },
+  { id: 112, name: 'Paket HJ 2', selling_price: 25000, active: true, outlet_type: 'modern', description: '1 pb + 1 nasi', barang_id: 1, ingredients: [{ barang_id: 1, qty: 1 }, { barang_id: 7, qty: 1 }], items_composition: { pb: 1, nasi: 1 } },
 
   // Modern Outlet Extra & Ala Carte
-  { id: 113, name: 'Kulit Extra', selling_price: 5000, active: true, outlet_type: 'modern', description: '1 porsi Kulit Crispy', barang_id: 4, items_composition: { kulit: 1 } },
-  { id: 117, name: 'Kulit CK', selling_price: 5000, active: true, outlet_type: 'modern', description: '1 porsi Kulit CK', barang_id: 5, items_composition: { kulit_ck: 1 } },
-  { id: 114, name: 'Nasi Extra', selling_price: 3000, active: true, outlet_type: 'modern', description: '1 porsi Nasi Tambahan', barang_id: 7, items_composition: { nasi: 1 } },
-  { id: 115, name: 'Chili Oil Extra', selling_price: 1000, active: true, outlet_type: 'modern', description: 'Saus Chili Oil', barang_id: 9 },
-  { id: 116, name: 'Geprek Extra', selling_price: 2000, active: true, outlet_type: 'modern', description: 'Sambal Geprek', barang_id: 10 },
+  { id: 113, name: 'Kulit Extra', selling_price: 5000, active: true, outlet_type: 'modern', description: '1 porsi Kulit Crispy', barang_id: 4, ingredients: [{ barang_id: 4, qty: 1 }], items_composition: { kulit: 1 } },
+  { id: 117, name: 'Kulit CK', selling_price: 5000, active: true, outlet_type: 'modern', description: '1 porsi Kulit CK', barang_id: 5, ingredients: [{ barang_id: 5, qty: 1 }], items_composition: { kulit_ck: 1 } },
+  { id: 114, name: 'Nasi Extra', selling_price: 3000, active: true, outlet_type: 'modern', description: '1 porsi Nasi Tambahan', barang_id: 7, ingredients: [{ barang_id: 7, qty: 1 }], items_composition: { nasi: 1 } },
+  { id: 115, name: 'Chili Oil Extra', selling_price: 1000, active: true, outlet_type: 'modern', description: 'Saus Chili Oil', barang_id: 9, ingredients: [{ barang_id: 9, qty: 1 }] },
+  { id: 116, name: 'Geprek Extra', selling_price: 2000, active: true, outlet_type: 'modern', description: 'Sambal Geprek', barang_id: 10, ingredients: [{ barang_id: 10, qty: 1 }] },
 ];
 
 export const OUTLETS = [

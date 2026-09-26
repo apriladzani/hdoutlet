@@ -239,6 +239,9 @@ export async function initDatabase(): Promise<void> {
   try {
     await p.query(`ALTER TABLE \`products\` ADD COLUMN \`barang_id\` INT UNSIGNED NULL`);
   } catch { }
+  try {
+    await p.query(`ALTER TABLE \`products\` ADD COLUMN \`ingredients\` JSON NULL`);
+  } catch { }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS \`reports\` (
@@ -553,7 +556,7 @@ export const mySqlService = {
   // --- Products ---
   async getProducts(outletType?: string): Promise<Product[]> {
     const p = getPool();
-    let query = 'SELECT product_id as id, product_name as name, selling_price, outlet_type, description, items_composition, barang_id, is_active FROM `products`';
+    let query = 'SELECT product_id as id, product_name as name, selling_price, outlet_type, description, items_composition, ingredients, barang_id, is_active FROM `products`';
     const params: any[] = [];
 
     if (outletType && outletType !== 'all') {
@@ -566,6 +569,10 @@ export const mySqlService = {
     return rows.map((r) => {
       const defaultMatch = DEFAULT_PRODUCTS.find((p) => p.id === r.id || p.name.toLowerCase() === r.name?.toLowerCase());
       const resolvedBarangId = r.barang_id !== null && r.barang_id !== undefined ? Number(r.barang_id) : (defaultMatch?.barang_id || undefined);
+      const resolvedIngredients = r.ingredients
+        ? (typeof r.ingredients === 'string' ? JSON.parse(r.ingredients) : r.ingredients)
+        : (defaultMatch?.ingredients || undefined);
+
       return {
         id: r.id,
         name: r.name,
@@ -574,6 +581,7 @@ export const mySqlService = {
         outlet_type: r.outlet_type || 'all',
         description: r.description || '',
         items_composition: typeof r.items_composition === 'string' ? JSON.parse(r.items_composition) : r.items_composition || undefined,
+        ingredients: resolvedIngredients,
         barang_id: resolvedBarangId,
       };
     });
@@ -587,7 +595,7 @@ export const mySqlService = {
     const barang_id = data.barang_id ? Number(data.barang_id) : null;
 
     const [res] = await p.query<ResultSetHeader>(
-      'INSERT INTO `products` (product_name, selling_price, cost_price, unit, outlet_type, description, items_composition, barang_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `products` (product_name, selling_price, cost_price, unit, outlet_type, description, items_composition, ingredients, barang_id, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         name,
         Number(data.selling_price) || 0,
@@ -596,6 +604,7 @@ export const mySqlService = {
         data.outlet_type || 'all',
         data.description || null,
         data.items_composition ? JSON.stringify(data.items_composition) : null,
+        data.ingredients ? JSON.stringify(data.ingredients) : null,
         barang_id,
         data.active !== false ? 1 : 0,
       ]
@@ -609,6 +618,7 @@ export const mySqlService = {
       outlet_type: data.outlet_type || 'all',
       description: data.description || '',
       items_composition: data.items_composition,
+      ingredients: data.ingredients,
       barang_id: barang_id ? Number(barang_id) : undefined,
     };
   },
@@ -624,17 +634,19 @@ export const mySqlService = {
     const outlet_type = data.outlet_type !== undefined ? data.outlet_type : current.outlet_type;
     const description = data.description !== undefined ? data.description : current.description;
     const items_composition = data.items_composition !== undefined ? data.items_composition : current.items_composition;
+    const ingredients = data.ingredients !== undefined ? data.ingredients : current.ingredients;
     const is_active = data.active !== undefined ? (data.active ? 1 : 0) : current.is_active;
     const barang_id = data.barang_id !== undefined ? (data.barang_id ? Number(data.barang_id) : null) : (current.barang_id ?? null);
 
     await p.query(
-      'UPDATE `products` SET product_name = ?, selling_price = ?, outlet_type = ?, description = ?, items_composition = ?, barang_id = ?, is_active = ? WHERE product_id = ?',
+      'UPDATE `products` SET product_name = ?, selling_price = ?, outlet_type = ?, description = ?, items_composition = ?, ingredients = ?, barang_id = ?, is_active = ? WHERE product_id = ?',
       [
         name,
         selling_price,
         outlet_type,
         description,
         items_composition ? JSON.stringify(items_composition) : null,
+        ingredients ? JSON.stringify(ingredients) : null,
         barang_id,
         is_active,
         id,
@@ -649,6 +661,7 @@ export const mySqlService = {
       outlet_type: outlet_type || 'all',
       description: description || '',
       items_composition: typeof items_composition === 'string' ? JSON.parse(items_composition) : items_composition,
+      ingredients: typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients,
       barang_id: barang_id ? Number(barang_id) : undefined,
     };
   },
